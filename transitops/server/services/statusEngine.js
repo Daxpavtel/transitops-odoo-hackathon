@@ -108,7 +108,7 @@ const statusEngine = {
     return trip;
   },
 
-  async cancelTrip(tripId) {
+  async cancelTrip(tripId, cancellationReason = '') {
     const trip = await Trip.findById(tripId);
     if (!trip) throw new AppError(404, 'Trip not found');
 
@@ -117,6 +117,7 @@ const statusEngine = {
     }
 
     trip.status = 'Cancelled';
+    trip.cancellationReason = cancellationReason;
     await trip.save();
 
     await Vehicle.findByIdAndUpdate(trip.vehicle, { status: 'Available' });

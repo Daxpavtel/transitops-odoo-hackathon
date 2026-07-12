@@ -69,7 +69,8 @@ exports.completeTrip = async (req, res, next) => {
 
 exports.cancelTrip = async (req, res, next) => {
   try {
-    const trip = await statusEngine.cancelTrip(req.params.id);
+    const { cancellationReason } = req.body;
+    const trip = await statusEngine.cancelTrip(req.params.id, cancellationReason);
     res.json({ success: true, data: trip });
   } catch (error) {
     next(error);

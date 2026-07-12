@@ -16,7 +16,8 @@ const tripValidationRules = [
 ];
 
 const completeValidationRules = [
-  body('actualDistance').isFloat({ gt: 0 }).withMessage('Actual Distance must be > 0')
+  body('actualDistance').isFloat({ gt: 0 }).withMessage('Actual Distance must be > 0'),
+  body('fuelConsumed').isFloat({ gt: 0 }).withMessage('Fuel Consumed must be > 0')
 ];
 
 router.use(auth);

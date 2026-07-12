@@ -17,9 +17,13 @@ import {
   Trash2,
   AlertCircle,
   Wrench,
-  BarChart3
+  BarChart3,
+  Compass
 } from 'lucide-react';
 import ReportsAnalytics from './pages/ReportsAnalytics';
+import TripDispatcher from './pages/TripDispatcher';
+import FuelExpenses from './pages/FuelExpenses';
+import Settings from './pages/Settings';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -84,12 +88,38 @@ function App() {
     fetchData();
   }, [activeTab]);
 
+  const getAuthHeaders = async () => {
+    let email = 'fleetmanager@transitops.io';
+    if (currentUser.role === 'FinancialAnalyst') email = 'finance@transitops.io';
+    else if (currentUser.role === 'Dispatcher') email = 'dispatcher@transitops.io';
+    else if (currentUser.role === 'SafetyOfficer') email = 'safety@transitops.io';
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'Password@123' })
+      });
+      const result = await res.json();
+      if (result.success && result.data.token) {
+        return {
+          'Authorization': `Bearer ${result.data.token}`,
+          'Content-Type': 'application/json'
+        };
+      }
+    } catch (e) {
+      console.error('Failed to get auth token', e);
+    }
+    return { 'Content-Type': 'application/json' };
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
+      const headers = await getAuthHeaders();
       if (activeTab === 'vehicles') {
-        const res = await fetch(`${API_BASE_URL}/vehicles`);
+        const res = await fetch(`${API_BASE_URL}/vehicles`, { headers });
         const result = await res.json();
         if (result.success) {
           setVehicles(result.data);
@@ -97,7 +127,7 @@ function App() {
           setErrorMsg(result.errors?.[0]?.message || 'Failed to fetch vehicles');
         }
       } else if (activeTab === 'drivers') {
-        const res = await fetch(`${API_BASE_URL}/drivers`);
+        const res = await fetch(`${API_BASE_URL}/drivers`, { headers });
         const result = await res.json();
         if (result.success) {
           setDrivers(result.data);
@@ -106,7 +136,7 @@ function App() {
         }
       } else if (activeTab === 'maintenance') {
         // Fetch logs
-        const res = await fetch(`${API_BASE_URL}/maintenance`);
+        const res = await fetch(`${API_BASE_URL}/maintenance`, { headers });
         const result = await res.json();
         if (result.success) {
           setMaintenanceLogs(result.data);
@@ -115,7 +145,7 @@ function App() {
         }
 
         // Fetch vehicles for dropdown
-        const resV = await fetch(`${API_BASE_URL}/vehicles`);
+        const resV = await fetch(`${API_BASE_URL}/vehicles`, { headers });
         const resultV = await resV.json();
         if (resultV.success) {
           setVehicles(resultV.data);
@@ -290,9 +320,10 @@ function App() {
     }
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/maintenance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(maintenanceForm)
       });
       const result = await res.json();
@@ -326,9 +357,10 @@ function App() {
 
   const handleCloseMaintenance = async (logId) => {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/maintenance/${logId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: 'Closed' })
       });
       const result = await res.json();
@@ -419,9 +451,10 @@ function App() {
         : `${API_BASE_URL}/vehicles`;
       const method = editingItem ? 'PATCH' : 'POST';
 
+      const headers = await getAuthHeaders();
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(vehicleForm)
       });
       const result = await res.json();
@@ -462,9 +495,10 @@ function App() {
         : `${API_BASE_URL}/drivers`;
       const method = editingItem ? 'PATCH' : 'POST';
 
+      const headers = await getAuthHeaders();
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(driverForm)
       });
       const result = await res.json();
@@ -493,7 +527,8 @@ function App() {
   const handleDeleteVehicle = async (id) => {
     if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/vehicles/${id}`, { method: 'DELETE' });
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/vehicles/${id}`, { method: 'DELETE', headers });
       const result = await res.json();
       if (result.success) {
         fetchData();
@@ -508,7 +543,8 @@ function App() {
   const handleDeleteDriver = async (id) => {
     if (!window.confirm('Are you sure you want to delete this driver?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/drivers/${id}`, { method: 'DELETE' });
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/drivers/${id}`, { method: 'DELETE', headers });
       const result = await res.json();
       if (result.success) {
         fetchData();
@@ -700,6 +736,18 @@ function App() {
             </button>
 
             <button
+              onClick={() => { setActiveTab('trips'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'trips' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <Compass className="w-5 h-5" />
+              <span>Trip Dispatcher</span>
+            </button>
+
+            <button
               onClick={() => { setActiveTab('maintenance'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === 'maintenance' 
@@ -709,6 +757,18 @@ function App() {
             >
               <Wrench className="w-5 h-5" />
               <span>Maintenance</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('fuelexpenses'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'fuelexpenses' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <DollarSign className="w-5 h-5" />
+              <span>Fuel & Expenses</span>
             </button>
 
             <button
@@ -1300,6 +1360,14 @@ function App() {
               <ReportsAnalytics currentUser={currentUser} />
             )}
 
+            {activeTab === 'trips' && (
+              <TripDispatcher currentUser={currentUser} />
+            )}
+
+            {activeTab === 'fuelexpenses' && (
+              <FuelExpenses currentUser={currentUser} />
+            )}
+
           </div>
 
           {/* MODULE FOOTERS - MUST BE EXACT FOOTERS */}
@@ -1310,6 +1378,10 @@ function App() {
               <span>Rule: Expired license or Suspended status → blocked from trip assignment</span>
             ) : activeTab === 'maintenance' ? (
               <span>Note: In Shop vehicles are removed from the dispatch pool</span>
+            ) : activeTab === 'trips' ? (
+              <span>On Complete: odometer -&gt; fuel log -&gt; expenses -&gt; Vehicle & Driver Available</span>
+            ) : activeTab === 'fuelexpenses' ? (
+              <span>Total Operational Cost = Fuel + Maintenance (server-computed, never cached)</span>
             ) : (
               <span>ROI Formula = (Total Revenue - Total Expense) / Total Expense</span>
             )}

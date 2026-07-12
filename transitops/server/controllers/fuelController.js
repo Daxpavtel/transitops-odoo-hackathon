@@ -8,6 +8,15 @@ exports.getFuelLogs = async (req, res, next) => {
     if (req.query.vehicle) {
       filter.vehicle = req.query.vehicle;
     }
+    if (req.query.from || req.query.to) {
+      filter.date = {};
+      if (req.query.from) filter.date.$gte = new Date(req.query.from);
+      if (req.query.to) {
+        const end = new Date(req.query.to);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
+    }
     const logs = await FuelLog.find(filter).populate('vehicle').sort({ date: -1 });
     res.json({ success: true, data: logs });
   } catch (error) {
@@ -17,8 +26,31 @@ exports.getFuelLogs = async (req, res, next) => {
 
 exports.createFuelLog = async (req, res, next) => {
   try {
+    // Handle express-validator errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array().map(err => ({
+          field: err.path || err.param,
+          message: err.msg
+        }))
+      });
+    }
+
     const { vehicle, liters, cost, date } = req.body;
-    
+
+    // Business rule: date must not be in the future
+    const parsedDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (parsedDate > today) {
+      return res.status(400).json({
+        success: false,
+        errors: [{ field: 'date', message: 'Fuel log date must not be in the future.' }]
+      });
+    }
+
     const vehicleExists = await Vehicle.findById(vehicle);
     if (!vehicleExists) {
       return res.status(404).json({ success: false, errors: [{ field: 'vehicle', message: 'Vehicle not found' }] });
@@ -28,7 +60,7 @@ exports.createFuelLog = async (req, res, next) => {
       vehicle,
       liters,
       cost,
-      date: date ? new Date(date) : new Date()
+      date: parsedDate
     });
 
     await log.save();

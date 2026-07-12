@@ -15,6 +15,7 @@ const tripSchema = new mongoose.Schema({
     enum: ['Draft', 'Dispatched', 'Completed', 'Cancelled'],
     default: 'Draft' 
   },
+  cancellationReason: { type: String, default: '' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 

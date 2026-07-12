@@ -20,11 +20,13 @@ const authRoutes = require('./routes/auth');
 const vehicleRoutes = require('./routes/vehicles');
 const driverRoutes = require('./routes/drivers');
 const tripRoutes = require('./routes/trips');
+const maintenanceRoutes = require('./routes/maintenance');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

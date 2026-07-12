@@ -15,7 +15,8 @@ import {
   DollarSign, 
   Edit, 
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Wrench
 } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -35,6 +36,7 @@ function App() {
   // Backend Data
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -64,8 +66,17 @@ function App() {
     status: 'Available'
   });
 
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    vehicle: '',
+    serviceType: '',
+    cost: '',
+    date: '',
+    status: 'Active'
+  });
+
   // Client Validation Errors
   const [formErrors, setFormErrors] = useState({});
+  const [maintenanceFormErrors, setMaintenanceFormErrors] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -83,13 +94,29 @@ function App() {
         } else {
           setErrorMsg(result.errors?.[0]?.message || 'Failed to fetch vehicles');
         }
-      } else {
+      } else if (activeTab === 'drivers') {
         const res = await fetch(`${API_BASE_URL}/drivers`);
         const result = await res.json();
         if (result.success) {
           setDrivers(result.data);
         } else {
           setErrorMsg(result.errors?.[0]?.message || 'Failed to fetch drivers');
+        }
+      } else if (activeTab === 'maintenance') {
+        // Fetch logs
+        const res = await fetch(`${API_BASE_URL}/maintenance`);
+        const result = await res.json();
+        if (result.success) {
+          setMaintenanceLogs(result.data);
+        } else {
+          setErrorMsg(result.errors?.[0]?.message || 'Failed to fetch maintenance logs');
+        }
+
+        // Fetch vehicles for dropdown
+        const resV = await fetch(`${API_BASE_URL}/vehicles`);
+        const resultV = await resV.json();
+        if (resultV.success) {
+          setVehicles(resultV.data);
         }
       }
     } catch (err) {
@@ -216,6 +243,101 @@ function App() {
     setDriverForm(updated);
     const errors = validateDriverForm(updated);
     setFormErrors(errors);
+  };
+
+  const validateMaintenanceForm = (data) => {
+    const errors = {};
+    if (!data.vehicle) {
+      errors.vehicle = 'Vehicle selection is required.';
+    }
+    if (!(data.serviceType || '').trim()) {
+      errors.serviceType = 'Service type is required.';
+    }
+    const cost = parseFloat(data.cost);
+    if (isNaN(cost) || cost < 0) {
+      errors.cost = 'Cost must be greater than or equal to 0.';
+    }
+    if (!data.date) {
+      errors.date = 'Date is required.';
+    } else {
+      const parsedDate = new Date(data.date);
+      const today = new Date();
+      if (isNaN(parsedDate.getTime())) {
+        errors.date = 'Invalid date format.';
+      } else if (parsedDate > today) {
+        errors.date = 'Date must not be in the future.';
+      }
+    }
+    return errors;
+  };
+
+  const handleMaintenanceChange = (e) => {
+    const { name, value } = e.target;
+    const updated = { ...maintenanceForm, [name]: value };
+    setMaintenanceForm(updated);
+    const errors = validateMaintenanceForm(updated);
+    setMaintenanceFormErrors(errors);
+  };
+
+  const handleMaintenanceSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validateMaintenanceForm(maintenanceForm);
+    if (Object.keys(errors).length > 0) {
+      setMaintenanceFormErrors(errors);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/maintenance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(maintenanceForm)
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMaintenanceForm({
+          vehicle: '',
+          serviceType: '',
+          cost: '',
+          date: '',
+          status: 'Active'
+        });
+        setMaintenanceFormErrors({});
+        fetchData();
+      } else {
+        const newErrors = {};
+        if (result.errors) {
+          result.errors.forEach(err => {
+            if (err.field) {
+              newErrors[err.field] = err.message;
+            } else {
+              setErrorMsg(err.message);
+            }
+          });
+        }
+        setMaintenanceFormErrors(newErrors);
+      }
+    } catch (err) {
+      setErrorMsg('Failed to log service record. Connection error.');
+    }
+  };
+
+  const handleCloseMaintenance = async (logId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/maintenance/${logId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Closed' })
+      });
+      const result = await res.json();
+      if (result.success) {
+        fetchData();
+      } else {
+        setErrorMsg(result.errors?.[0]?.message || 'Failed to close maintenance record.');
+      }
+    } catch (err) {
+      setErrorMsg('Connection error while closing maintenance.');
+    }
   };
 
   // --- ACTIONS ---
@@ -524,6 +646,15 @@ function App() {
            driverForm.contact;
   };
 
+  const isMaintenanceFormValid = () => {
+    const errors = validateMaintenanceForm(maintenanceForm);
+    return Object.keys(errors).length === 0 &&
+           maintenanceForm.vehicle &&
+           maintenanceForm.serviceType &&
+           maintenanceForm.cost &&
+           maintenanceForm.date;
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans text-slate-800">
       {/* 1. DARK SIDEBAR */}
@@ -565,6 +696,18 @@ function App() {
               <Users className="w-5 h-5" />
               <span>Drivers & Safety</span>
             </button>
+
+            <button
+              onClick={() => { setActiveTab('maintenance'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'maintenance' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <Wrench className="w-5 h-5" />
+              <span>Maintenance</span>
+            </button>
           </nav>
         </div>
 
@@ -596,7 +739,13 @@ function App() {
             </span>
             <input
               type="text"
-              placeholder={activeTab === 'vehicles' ? "Search vehicle by model, registration..." : "Search driver by name, license..."}
+              placeholder={
+                activeTab === 'vehicles' 
+                  ? "Search vehicle by model, registration..." 
+                  : activeTab === 'drivers' 
+                    ? "Search driver by name, license..."
+                    : "Search logs by vehicle, service type..."
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -625,17 +774,23 @@ function App() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  {activeTab === 'vehicles' ? 'Vehicle Registry' : 'Drivers & Safety Profiles'}
+                  {activeTab === 'vehicles' 
+                    ? 'Vehicle Registry' 
+                    : activeTab === 'drivers' 
+                      ? 'Drivers & Safety Profiles' 
+                      : 'Vehicle Maintenance Workflow'}
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
                   {activeTab === 'vehicles' 
                     ? 'Manage your fleet registry, odometer details, load limits, and deployment states.' 
-                    : 'Track driver qualifications, safety compliance, metrics, and licensing status.'}
+                    : activeTab === 'drivers'
+                      ? 'Track driver qualifications, safety compliance, metrics, and licensing status.'
+                      : 'Track vehicle service records and automatically manage shop deployment states.'}
                 </p>
               </div>
 
               <div>
-                {activeTab === 'vehicles' ? (
+                {activeTab === 'vehicles' && (
                   <button
                     onClick={handleOpenAddVehicle}
                     className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
@@ -643,7 +798,8 @@ function App() {
                     <Plus className="w-4 h-4" />
                     <span>Add Vehicle</span>
                   </button>
-                ) : (
+                )}
+                {activeTab === 'drivers' && (
                   <button
                     onClick={handleOpenAddDriver}
                     className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
@@ -894,14 +1050,242 @@ function App() {
               </div>
             )}
 
+            {activeTab === 'maintenance' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Panel: Log Service Record Form */}
+                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-4">Log Service Record</h3>
+                    <form onSubmit={handleMaintenanceSubmit} className="space-y-4">
+                      {/* Vehicle selection dropdown */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle</label>
+                        <select
+                          name="vehicle"
+                          value={maintenanceForm.vehicle}
+                          onChange={handleMaintenanceChange}
+                          className={`w-full p-2.5 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 ${
+                            maintenanceFormErrors.vehicle ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                          }`}
+                        >
+                          <option value="">Select a Vehicle</option>
+                          {vehicles.map(v => (
+                            <option key={v._id} value={v._id}>
+                              {v.registrationNumber} — {v.name} ({v.status})
+                            </option>
+                          ))}
+                        </select>
+                        {maintenanceFormErrors.vehicle && (
+                          <p className="text-red-500 text-xs mt-1">{maintenanceFormErrors.vehicle}</p>
+                        )}
+                      </div>
+
+                      {/* Service Type */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Service Type</label>
+                        <input
+                          type="text"
+                          name="serviceType"
+                          value={maintenanceForm.serviceType}
+                          onChange={handleMaintenanceChange}
+                          placeholder="e.g. Engine Oil Change, Brake Repair"
+                          className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                            maintenanceFormErrors.serviceType ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                          }`}
+                        />
+                        {maintenanceFormErrors.serviceType && (
+                          <p className="text-red-500 text-xs mt-1">{maintenanceFormErrors.serviceType}</p>
+                        )}
+                      </div>
+
+                      {/* Cost */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cost ($)</label>
+                        <input
+                          type="number"
+                          name="cost"
+                          value={maintenanceForm.cost}
+                          onChange={handleMaintenanceChange}
+                          placeholder="e.g. 350"
+                          className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                            maintenanceFormErrors.cost ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                          }`}
+                        />
+                        {maintenanceFormErrors.cost && (
+                          <p className="text-red-500 text-xs mt-1">{maintenanceFormErrors.cost}</p>
+                        )}
+                      </div>
+
+                      {/* Date */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Date</label>
+                        <input
+                          type="date"
+                          name="date"
+                          value={maintenanceForm.date}
+                          onChange={handleMaintenanceChange}
+                          className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                            maintenanceFormErrors.date ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                          }`}
+                        />
+                        {maintenanceFormErrors.date && (
+                          <p className="text-red-500 text-xs mt-1">{maintenanceFormErrors.date}</p>
+                        )}
+                      </div>
+
+                      {/* Status select/toggle */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Status</label>
+                        <select
+                          name="status"
+                          value={maintenanceForm.status}
+                          onChange={handleMaintenanceChange}
+                          className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        >
+                          <option value="Active">Active</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={!isMaintenanceFormValid()}
+                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all mt-4"
+                      >
+                        Save Service Record
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Flow Diagram */}
+                  <div className="mt-8 pt-4 border-t border-slate-100">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vehicle Maintenance Flow</h4>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-500 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-700">Log Service (Active):</span>
+                        <span>Available → <span className="text-amber-600 font-bold">In Shop</span></span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-700">Close Service:</span>
+                        <span>In Shop → <span className="text-emerald-600 font-bold">Available</span></span>
+                      </div>
+                      <div className="text-[10px] text-red-500 font-medium italic mt-1">
+                        * Note: If vehicle is Retired, status remains Retired on close.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Panel: Service Log Table */}
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                      <h3 className="text-base font-bold text-slate-900">Service Log</h3>
+                      <span className="text-xs text-slate-500">
+                        {maintenanceLogs.length} records logged
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                            <th className="px-6 py-3">Vehicle</th>
+                            <th className="px-6 py-3">Service Type</th>
+                            <th className="px-6 py-3 text-right">Cost</th>
+                            <th className="px-6 py-3">Date</th>
+                            <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                          {loading ? (
+                            <tr>
+                              <td colSpan="6" className="px-6 py-12 text-center text-slate-400">Loading service logs...</td>
+                            </tr>
+                          ) : maintenanceLogs.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="px-6 py-12 text-center text-slate-400">No service records found.</td>
+                            </tr>
+                          ) : (
+                            (() => {
+                              let count = 0;
+                              const rows = maintenanceLogs.map(log => {
+                                const matchesSearch = 
+                                  (log.serviceType || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                  (log.vehicle?.registrationNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                  (log.vehicle?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+                                
+                                if (!matchesSearch) return null;
+                                count++;
+
+                                return (
+                                  <tr key={log._id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                      <div className="font-mono font-bold text-slate-900">{log.vehicle?.registrationNumber || 'N/A'}</div>
+                                      <div className="text-xs text-slate-500">{log.vehicle?.name || 'N/A'}</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-700 font-medium">{log.serviceType}</td>
+                                    <td className="px-6 py-4 text-right font-mono text-slate-600">${log.cost.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-slate-600">
+                                      {new Date(log.date).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      })}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                                        log.status === 'Closed' 
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      }`}>
+                                        {log.status}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                      {log.status === 'Active' ? (
+                                        <button
+                                          onClick={() => handleCloseMaintenance(log._id)}
+                                          className="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1 rounded transition-colors"
+                                        >
+                                          Close Log
+                                        </button>
+                                      ) : (
+                                        <span className="text-xs text-slate-400 font-medium italic">Completed</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                              if (count === 0) {
+                                return (
+                                  <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">No matching service records found.</td>
+                                  </tr>
+                                );
+                              }
+                              return rows;
+                            })()
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* MODULE FOOTERS - MUST BE EXACT FOOTERS */}
           <footer className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-400 text-center font-medium italic">
             {activeTab === 'vehicles' ? (
               <span>Rule: Registration no. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher</span>
-            ) : (
+            ) : activeTab === 'drivers' ? (
               <span>Rule: Expired license or Suspended status → blocked from trip assignment</span>
+            ) : (
+              <span>Note: In Shop vehicles are removed from the dispatch pool</span>
             )}
           </footer>
         </main>

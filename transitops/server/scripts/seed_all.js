@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
+const MaintenanceLog = require('../models/MaintenanceLog');
 require('dotenv').config();
 
 const seedUsers = [
@@ -14,7 +15,7 @@ const seedUsers = [
 
 const seedVehicles = [
   { registrationNumber: "MH12QW1234", name: "Tata Ace Gold", type: "Mini", maxLoadCapacity: 850, odometer: 42000, acquisitionCost: 6500, status: "Available" },
-  { registrationNumber: "DL01AB9999", name: "Mahindra Scorpio Pick-up", type: "Van", maxLoadCapacity: 1200, odometer: 15200, acquisitionCost: 14000, status: "On Trip" },
+  { registrationNumber: "DL01AB9999", name: "Mahindra Scorpio Pick-up", type: "Van", maxLoadCapacity: 1200, odometer: 15200, acquisitionCost: 14000, status: "Available" },
   { registrationNumber: "KA03XY4567", name: "Eicher Pro 2049", type: "Truck", maxLoadCapacity: 3500, odometer: 89000, acquisitionCost: 28000, status: "In Shop" },
   { registrationNumber: "HR55ZZ0001", name: "BharatBenz 1917R", type: "Truck", maxLoadCapacity: 10500, odometer: 150000, acquisitionCost: 45000, status: "Retired" }
 ];
@@ -26,7 +27,7 @@ const pastDate = new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000);
 
 const seedDrivers = [
   { name: "Rajesh Kumar", licenseNumber: "DL1420110012345", licenseCategory: "HMV", licenseExpiry: next60Days, contact: "9876543210", safetyScore: 95, status: "Available" },
-  { name: "Amit Sharma", licenseNumber: "MH1220150098765", licenseCategory: "LMV", licenseExpiry: next15Days, contact: "8765432109", safetyScore: 88, status: "On Trip" },
+  { name: "Amit Sharma", licenseNumber: "MH1220150098765", licenseCategory: "LMV", licenseExpiry: next15Days, contact: "8765432109", safetyScore: 88, status: "Available" },
   { name: "Vikram Singh", licenseNumber: "KA0320100045678", licenseCategory: "Heavy Trailer", licenseExpiry: pastDate, contact: "7654321098", safetyScore: 72, status: "Suspended" },
   { name: "Suresh Raina", licenseNumber: "HR5520180011223", licenseCategory: "MCWG", licenseExpiry: next60Days, contact: "6543210987", safetyScore: 91, status: "Off Duty" }
 ];
@@ -35,11 +36,12 @@ const seedDB = async () => {
   try {
     const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/transitops';
     await mongoose.connect(MONGO_URI);
-    console.log('MongoDB connected for seeding all tables.');
+    console.log('MongoDB connected for seeding nested DB.');
 
     await User.deleteMany({});
     await Vehicle.deleteMany({});
     await Driver.deleteMany({});
+    await MaintenanceLog.deleteMany({});
 
     // Seed Users
     for (const userData of seedUsers) {
@@ -57,12 +59,25 @@ const seedDB = async () => {
     console.log('Users seeded.');
 
     // Seed Vehicles
-    await Vehicle.insertMany(seedVehicles);
+    const vehicles = await Vehicle.insertMany(seedVehicles);
     console.log('Vehicles seeded.');
 
     // Seed Drivers
     await Driver.insertMany(seedDrivers);
     console.log('Drivers seeded.');
+
+    // Seed an active maintenance log for the vehicle "KA03XY4567" which is "In Shop"
+    const inShopVehicle = vehicles.find(v => v.registrationNumber === 'KA03XY4567');
+    if (inShopVehicle) {
+      await MaintenanceLog.create({
+        vehicle: inShopVehicle._id,
+        serviceType: "Engine Overhaul",
+        cost: 1200,
+        date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
+        status: "Active"
+      });
+      console.log('Active maintenance log seeded for In Shop vehicle.');
+    }
 
     console.log('\nSeed successful!');
     process.exit(0);

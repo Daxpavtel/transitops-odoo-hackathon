@@ -19,6 +19,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(formData)
       });
       

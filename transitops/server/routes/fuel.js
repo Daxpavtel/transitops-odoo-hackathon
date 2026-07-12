@@ -29,9 +29,8 @@ const handleValidationErrors = (req, res, next) => {
 const { validationResult } = require('express-validator');
 
 router.use(auth);
-router.use(authorize('canManageFuelExpenses'));
 
-router.get('/', fuelController.getFuelLogs);
-router.post('/', validateFuel, handleValidationErrors, fuelController.createFuelLog);
+router.get('/', authorize('fuelExpenses', 'view'), fuelController.getFuelLogs);
+router.post('/', authorize('fuelExpenses', 'edit'), validateFuel, handleValidationErrors, fuelController.createFuelLog);
 
 module.exports = router;

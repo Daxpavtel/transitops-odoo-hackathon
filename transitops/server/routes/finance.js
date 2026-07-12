@@ -5,7 +5,7 @@ const auth = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 
 router.use(auth);
-router.use(authorize('canManageFuelExpenses'));
+router.use(authorize('fuelExpenses', 'view'));
 
 // Fleet-wide operational cost (legacy path)
 router.get('/operational-costs', financeController.getOperationalCosts);

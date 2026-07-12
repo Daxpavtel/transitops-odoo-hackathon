@@ -74,12 +74,11 @@ const driverUpdateValidationRules = [
 ];
 
 router.use(auth);
-router.use(authorize('canManageDrivers'));
 
-router.get('/', driverController.getDrivers);
-router.get('/:id', driverController.getDriverById);
-router.post('/', driverValidationRules, driverController.handleValidationErrors, driverController.createDriver);
-router.patch('/:id', driverUpdateValidationRules, driverController.handleValidationErrors, driverController.updateDriver);
-router.delete('/:id', driverController.deleteDriver);
+router.get('/', authorize('drivers', 'view'), driverController.getDrivers);
+router.get('/:id', authorize('drivers', 'view'), driverController.getDriverById);
+router.post('/', authorize('drivers', 'edit'), driverValidationRules, driverController.handleValidationErrors, driverController.createDriver);
+router.patch('/:id', authorize('drivers', 'edit'), driverUpdateValidationRules, driverController.handleValidationErrors, driverController.updateDriver);
+router.delete('/:id', authorize('drivers', 'edit'), driverController.deleteDriver);
 
 module.exports = router;

@@ -3,7 +3,7 @@ import { Plus, Fuel, Receipt, DollarSign, X, AlertCircle, Truck, Calendar, Filte
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-export default function FuelExpenses({ currentUser }) {
+export default function FuelExpenses({ currentUser, readOnly }) {
   const [fuelLogs, setFuelLogs] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -259,12 +259,15 @@ export default function FuelExpenses({ currentUser }) {
             <h3 className="text-base font-bold text-slate-800">Fuel Logs</h3>
             <span className="text-xs text-slate-400 font-semibold">{fuelLogs.length} entries</span>
           </div>
-          <button
-            onClick={() => { setShowFuelModal(true); setFuelFormErrors({}); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md shadow-indigo-600/10 transition-all flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" /> Log Fuel
-          </button>
+            {!readOnly && (
+              <button
+                onClick={() => { setShowFuelModal(true); setFuelFormErrors({}); }}
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Log Fuel Entry</span>
+              </button>
+            )}
         </div>
 
         <div className="overflow-x-auto">
@@ -315,12 +318,15 @@ export default function FuelExpenses({ currentUser }) {
             <h3 className="text-base font-bold text-slate-800">Other Expenses — Toll/Misc</h3>
             <span className="text-xs text-slate-400 font-semibold">{expenses.length} entries</span>
           </div>
-          <button
-            onClick={() => { setShowExpenseModal(true); setExpenseFormErrors({}); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md shadow-indigo-600/10 transition-all flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" /> Add Expense
-          </button>
+            {!readOnly && (
+              <button
+                onClick={() => { setShowExpenseModal(true); setExpenseFormErrors({}); }}
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Log Trip Expense</span>
+              </button>
+            )}
         </div>
 
         <div className="overflow-x-auto">

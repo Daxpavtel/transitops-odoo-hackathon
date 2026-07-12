@@ -74,12 +74,11 @@ const vehicleUpdateValidationRules = [
 ];
 
 router.use(auth);
-router.use(authorize('canManageVehicles'));
 
-router.get('/', vehicleController.getVehicles);
-router.get('/:id', vehicleController.getVehicleById);
-router.post('/', vehicleValidationRules, vehicleController.handleValidationErrors, vehicleController.createVehicle);
-router.patch('/:id', vehicleUpdateValidationRules, vehicleController.handleValidationErrors, vehicleController.updateVehicle);
-router.delete('/:id', vehicleController.deleteVehicle);
+router.get('/', authorize('fleet', 'view'), vehicleController.getVehicles);
+router.get('/:id', authorize('fleet', 'view'), vehicleController.getVehicleById);
+router.post('/', authorize('fleet', 'edit'), vehicleValidationRules, vehicleController.handleValidationErrors, vehicleController.createVehicle);
+router.patch('/:id', authorize('fleet', 'edit'), vehicleUpdateValidationRules, vehicleController.handleValidationErrors, vehicleController.updateVehicle);
+router.delete('/:id', authorize('fleet', 'edit'), vehicleController.deleteVehicle);
 
 module.exports = router;

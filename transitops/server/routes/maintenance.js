@@ -78,10 +78,9 @@ const maintenanceUpdateRules = [
 ];
 
 router.use(auth);
-router.use(authorize('canManageMaintenance'));
 
-router.get('/', maintenanceController.getMaintenanceLogs);
-router.post('/', maintenanceValidationRules, maintenanceController.handleValidationErrors, maintenanceController.createMaintenanceLog);
-router.patch('/:id', maintenanceUpdateRules, maintenanceController.handleValidationErrors, maintenanceController.updateMaintenanceLog);
+router.get('/', authorize('fleet', 'view'), maintenanceController.getMaintenanceLogs);
+router.post('/', authorize('fleet', 'edit'), maintenanceValidationRules, maintenanceController.handleValidationErrors, maintenanceController.createMaintenanceLog);
+router.patch('/:id', authorize('fleet', 'edit'), maintenanceUpdateRules, maintenanceController.handleValidationErrors, maintenanceController.updateMaintenanceLog);
 
 module.exports = router;

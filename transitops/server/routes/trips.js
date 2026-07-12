@@ -22,14 +22,11 @@ const completeValidationRules = [
 
 router.use(auth);
 
-// All trip routes require canDispatchTrips
-router.use(authorize('canDispatchTrips'));
+router.get('/', authorize('trips', 'view'), tripController.getTrips);
+router.post('/', authorize('trips', 'edit'), tripValidationRules, tripController.handleValidationErrors, tripController.createTrip);
 
-router.get('/', tripController.getTrips);
-router.post('/', tripValidationRules, tripController.handleValidationErrors, tripController.createTrip);
-
-router.post('/:id/dispatch', tripController.dispatchTrip);
-router.post('/:id/complete', completeValidationRules, tripController.handleValidationErrors, tripController.completeTrip);
-router.post('/:id/cancel', tripController.cancelTrip);
+router.post('/:id/dispatch', authorize('trips', 'edit'), tripController.dispatchTrip);
+router.post('/:id/complete', authorize('trips', 'edit'), completeValidationRules, tripController.handleValidationErrors, tripController.completeTrip);
+router.post('/:id/cancel', authorize('trips', 'edit'), tripController.cancelTrip);
 
 module.exports = router;

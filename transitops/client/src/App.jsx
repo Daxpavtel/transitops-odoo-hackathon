@@ -37,8 +37,41 @@ function App() {
   
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  // RBAC State
+  const [rbacMatrix, setRbacMatrix] = useState([]);
+
+  useEffect(() => {
+    const fetchMatrix = async () => {
+      try {
+        let email = 'fleetmanager@transitops.io';
+        const res = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: 'Password@123' })
+        });
+        const result = await res.json();
+        if (result.success && result.data.token) {
+          const rbacRes = await fetch(`${API_BASE_URL}/settings/rbac`, {
+            headers: { 'Authorization': `Bearer ${result.data.token}` }
+          });
+          const rbacData = await rbacRes.json();
+          if (rbacData.success) {
+            setRbacMatrix(rbacData.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch RBAC', err);
+      }
+    };
+    fetchMatrix();
+  }, []);
+
+  // Derive active permissions
+  const permissions = rbacMatrix.find(r => r.role === currentUser.role)?.permissions || {
+    fleet: 'hidden', drivers: 'hidden', trips: 'hidden', fuelExpenses: 'hidden', analytics: 'hidden'
+  };
 
   // Backend Data
   const [vehicles, setVehicles] = useState([]);
@@ -712,88 +745,117 @@ function App() {
 
           {/* Nav list */}
           <nav className="p-4 space-y-1">
-            <button
-              onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'dashboard' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <BarChart3 className="w-5 h-5" />
-              <span>Dashboard</span>
-            </button>
-            <button
-              onClick={() => { setActiveTab('vehicles'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'vehicles' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <Truck className="w-5 h-5" />
-              <span>Vehicle Registry</span>
-            </button>
+            {permissions.analytics !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'dashboard' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span>Dashboard</span>
+              </button>
+            )}
+
+            {permissions.fleet !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('vehicles'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'vehicles' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <Truck className="w-5 h-5" />
+                <span>Vehicle Registry</span>
+              </button>
+            )}
             
-            <button
-              onClick={() => { setActiveTab('drivers'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'drivers' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <Users className="w-5 h-5" />
-              <span>Drivers & Safety</span>
-            </button>
+            {permissions.drivers !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('drivers'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'drivers' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                <span>Drivers & Safety</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => { setActiveTab('trips'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'trips' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <Compass className="w-5 h-5" />
-              <span>Trip Dispatcher</span>
-            </button>
+            {permissions.trips !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('trips'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'trips' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <Compass className="w-5 h-5" />
+                <span>Trip Dispatcher</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => { setActiveTab('maintenance'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'maintenance' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <Wrench className="w-5 h-5" />
-              <span>Maintenance</span>
-            </button>
+            {permissions.fleet !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('maintenance'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'maintenance' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <Wrench className="w-5 h-5" />
+                <span>Maintenance</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => { setActiveTab('fuelexpenses'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'fuelexpenses' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <DollarSign className="w-5 h-5" />
-              <span>Fuel & Expenses</span>
-            </button>
+            {permissions.fuelExpenses !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('fuelexpenses'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'fuelexpenses' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <DollarSign className="w-5 h-5" />
+                <span>Fuel & Expenses</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => { setActiveTab('reports'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === 'reports' 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              }`}
-            >
-              <BarChart3 className="w-5 h-5" />
-              <span>Reports & Analytics</span>
-            </button>
+            {permissions.analytics !== 'hidden' && (
+              <button
+                onClick={() => { setActiveTab('reports'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'reports' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span>Reports & Analytics</span>
+              </button>
+            )}
+
+            {currentUser.role === 'FleetManager' && (
+              <button
+                onClick={() => { setActiveTab('settings'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'settings' 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                }`}
+              >
+                <AlertCircle className="w-5 h-5" />
+                <span>Settings & RBAC</span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -882,7 +944,7 @@ function App() {
               </div>
 
               <div>
-                {activeTab === 'vehicles' && (
+                {activeTab === 'vehicles' && permissions.fleet === 'edit' && (
                   <button
                     onClick={handleOpenAddVehicle}
                     className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
@@ -891,7 +953,7 @@ function App() {
                     <span>Add Vehicle</span>
                   </button>
                 )}
-                {activeTab === 'drivers' && (
+                {activeTab === 'drivers' && permissions.drivers === 'edit' && (
                   <button
                     onClick={handleOpenAddDriver}
                     className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
@@ -992,20 +1054,24 @@ function App() {
                             <td className="px-6 py-4">{getStatusBadge(v.status)}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-center gap-2">
-                                <button
-                                  onClick={() => handleOpenEditVehicle(v)}
-                                  className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteVehicle(v._id)}
-                                  className="p-1 hover:text-red-600 text-slate-400 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {permissions.fleet === 'edit' && (
+                                  <>
+                                    <button
+                                      onClick={() => handleOpenEditVehicle(v)}
+                                      className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
+                                      title="Edit"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteVehicle(v._id)}
+                                      className="p-1 hover:text-red-600 text-slate-400 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1106,20 +1172,24 @@ function App() {
                             <td className="px-6 py-4">{getStatusBadge(d.status, { isExpired: d.isExpired })}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-center gap-2">
-                                <button
-                                  onClick={() => handleOpenEditDriver(d)}
-                                  className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteDriver(d._id)}
-                                  className="p-1 hover:text-red-600 text-slate-400 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {permissions.drivers === 'edit' && (
+                                  <>
+                                    <button
+                                      onClick={() => handleOpenEditDriver(d)}
+                                      className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
+                                      title="Edit"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteDriver(d._id)}
+                                      className="p-1 hover:text-red-600 text-slate-400 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1239,13 +1309,15 @@ function App() {
                         </select>
                       </div>
 
-                      <button
-                        type="submit"
-                        disabled={!isMaintenanceFormValid()}
-                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all mt-4"
-                      >
-                        Save Service Record
-                      </button>
+                      {permissions.fleet === 'edit' && (
+                        <button
+                          type="submit"
+                          disabled={!isMaintenanceFormValid()}
+                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all mt-4"
+                        >
+                          Save Service Record
+                        </button>
+                      )}
                     </form>
                   </div>
 
@@ -1337,12 +1409,14 @@ function App() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                       {log.status === 'Active' ? (
-                                        <button
-                                          onClick={() => handleCloseMaintenance(log._id)}
-                                          className="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1 rounded transition-colors"
-                                        >
-                                          Close Log
-                                        </button>
+                                        permissions.fleet === 'edit' ? (
+                                          <button
+                                            onClick={() => handleCloseMaintenance(log._id)}
+                                            className="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1 rounded transition-colors"
+                                          >
+                                            Close Log
+                                          </button>
+                                        ) : null
                                       ) : (
                                         <span className="text-xs text-slate-400 font-medium italic">Completed</span>
                                       )}
@@ -1372,12 +1446,16 @@ function App() {
               <ReportsAnalytics currentUser={currentUser} />
             )}
 
+            {activeTab === 'settings' && (
+              <Settings currentUser={currentUser} onBack={() => setActiveTab('dashboard')} />
+            )}
+
             {activeTab === 'trips' && (
-              <TripDispatcher currentUser={currentUser} />
+              <TripDispatcher currentUser={currentUser} readOnly={permissions.trips !== 'edit'} />
             )}
 
             {activeTab === 'fuelexpenses' && (
-              <FuelExpenses currentUser={currentUser} />
+              <FuelExpenses currentUser={currentUser} readOnly={permissions.fuelExpenses !== 'edit'} />
             )}
 
             {activeTab === 'dashboard' && (

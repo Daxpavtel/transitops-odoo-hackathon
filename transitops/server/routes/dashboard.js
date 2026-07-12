@@ -5,7 +5,7 @@ const auth = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 
 router.use(auth);
-router.use(authorize('canViewDashboard'));
+router.use(authorize('analytics', 'view'));
 
 // Single summary endpoint for the entire dashboard
 router.get('/summary', dashboardController.getDashboardSummary);

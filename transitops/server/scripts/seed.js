@@ -48,6 +48,17 @@ const seedData = async () => {
     ];
     await Driver.insertMany(drivers);
 
+    console.log('Seeding RBAC Matrix...');
+    const RolePermission = require('../models/RolePermission');
+    await RolePermission.deleteMany({});
+    const matrix = [
+      { role: "FleetManager", permissions: { fleet: "edit", drivers: "edit", trips: "hidden", fuelExpenses: "hidden", analytics: "hidden" } },
+      { role: "Dispatcher", permissions: { fleet: "view", drivers: "hidden", trips: "edit", fuelExpenses: "edit", analytics: "edit" } },
+      { role: "SafetyOfficer", permissions: { fleet: "hidden", drivers: "view", trips: "hidden", fuelExpenses: "hidden", analytics: "hidden" } },
+      { role: "FinancialAnalyst", permissions: { fleet: "view", drivers: "hidden", trips: "hidden", fuelExpenses: "view", analytics: "edit" } }
+    ];
+    await RolePermission.insertMany(matrix);
+
     console.log('----------------------------------------------------');
     console.log('✅ SEED COMPLETED SUCCESSFULLY!');
     console.log('----------------------------------------------------');

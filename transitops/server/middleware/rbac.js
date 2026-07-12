@@ -1,6 +1,6 @@
-const Settings = require('../models/Settings');
+const RolePermission = require('../models/RolePermission');
 
-const authorize = (permissionKey) => {
+const authorize = (moduleName, requiredLevel) => {
   return async (req, res, next) => {
     try {
       if (!req.user) {
@@ -9,27 +9,31 @@ const authorize = (permissionKey) => {
 
       const role = req.user.role;
 
-      // FleetManager bypasses all checks
-      if (role === 'FleetManager') {
-        return next();
+      // Settings module is exclusive to FleetManager
+      if (moduleName === 'settings') {
+        if (role === 'FleetManager') return next();
+        else return res.status(403).json({ success: false, errors: [{ field: 'permission', message: 'Forbidden: Only Fleet Manager can access settings' }] });
       }
 
-      // Fetch global settings
-      let settings = await Settings.findOne();
-      if (!settings) {
-        settings = await Settings.create({});
-      }
-
-      const matrix = settings.rbacMatrix.get(role);
+      // For all other modules, strictly use the RolePermission matrix
+      const rp = await RolePermission.findOne({ role });
       
-      if (!matrix) {
-        return res.status(403).json({ success: false, errors: [{ field: 'role', message: 'Role not found in RBAC matrix' }] });
+      if (!rp) {
+        return res.status(403).json({ success: false, errors: [{ field: 'role', message: 'Role permissions not found in RBAC matrix' }] });
       }
 
-      if (matrix[permissionKey] !== true) {
-        return res.status(403).json({ success: false, errors: [{ field: 'permission', message: `Forbidden: Missing ${permissionKey} permission.` }] });
+      const userLevel = rp.permissions[moduleName];
+
+      if (!userLevel || userLevel === 'hidden') {
+        return res.status(403).json({ success: false, errors: [{ field: 'permission', message: `Forbidden: No access to ${moduleName}` }] });
       }
 
+      // If require 'edit', user must have 'edit'
+      if (requiredLevel === 'edit' && userLevel !== 'edit') {
+        return res.status(403).json({ success: false, errors: [{ field: 'permission', message: `Forbidden: Read-only access to ${moduleName}` }] });
+      }
+
+      // If require 'view', user can have 'view' or 'edit'
       next();
     } catch (err) {
       next(err);

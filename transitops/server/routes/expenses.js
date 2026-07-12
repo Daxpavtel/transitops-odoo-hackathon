@@ -29,10 +29,9 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 router.use(auth);
-router.use(authorize('canManageFuelExpenses'));
 
-router.get('/', expenseController.getExpenses);
-router.post('/', validateExpense, handleValidationErrors, expenseController.createExpense);
-router.put('/:id', validateExpense, handleValidationErrors, expenseController.updateExpense);
+router.get('/', authorize('fuelExpenses', 'view'), expenseController.getExpenses);
+router.post('/', authorize('fuelExpenses', 'edit'), validateExpense, handleValidationErrors, expenseController.createExpense);
+router.put('/:id', authorize('fuelExpenses', 'edit'), validateExpense, handleValidationErrors, expenseController.updateExpense);
 
 module.exports = router;

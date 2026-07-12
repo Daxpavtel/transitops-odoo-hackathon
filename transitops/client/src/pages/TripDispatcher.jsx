@@ -5,7 +5,7 @@ import {
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-export default function TripDispatcher({ currentUser }) {
+export default function TripDispatcher({ currentUser, readOnly }) {
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [trips, setTrips] = useState([]);
@@ -286,6 +286,7 @@ export default function TripDispatcher({ currentUser }) {
             </div>
           )}
           
+        {!readOnly && (
           <form onSubmit={handleCreateDraft} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Source</label>
@@ -409,6 +410,7 @@ export default function TripDispatcher({ currentUser }) {
               </button>
             </div>
           </form>
+        )}
         </div>
       </div>
 
@@ -465,9 +467,8 @@ export default function TripDispatcher({ currentUser }) {
                       </div>
 
                       <div className="text-[11px] font-bold text-indigo-600">
-                        {trip.status === 'Dispatched' && (
+                        {trip.status === 'Dispatched' && !readOnly && (
                           <div className="flex gap-2">
-                            <span>45 min ETA</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCancelTrip(trip._id); }}
                               className="text-red-600 hover:text-red-800 underline"
@@ -476,7 +477,7 @@ export default function TripDispatcher({ currentUser }) {
                             </button>
                           </div>
                         )}
-                        {trip.status === 'Draft' && (
+                        {trip.status === 'Draft' && !readOnly && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDispatch(trip._id); }}
                             className="bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors"

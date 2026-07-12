@@ -17,7 +17,12 @@ mongoose.connect(MONGO_URI)
 
 // Routes
 const authRoutes = require('./routes/auth');
+const vehicleRoutes = require('./routes/vehicles');
+const driverRoutes = require('./routes/drivers');
+
 app.use('/api/auth', authRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/drivers', driverRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

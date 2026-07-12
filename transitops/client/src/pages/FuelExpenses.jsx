@@ -210,10 +210,10 @@ export default function FuelExpenses({ currentUser, readOnly }) {
       Cancelled: 'bg-red-50 text-red-700 border-red-200',
       Retired: 'bg-red-50 text-red-700 border-red-200',
       Suspended: 'bg-red-50 text-red-700 border-red-200',
-      Draft: 'bg-slate-100 text-slate-600 border-slate-200',
-      'Off Duty': 'bg-slate-100 text-slate-600 border-slate-200'
+      Draft: 'bg-[var(--surface-base)] text-[var(--content-muted)] border-[var(--divider-subtle)]',
+      'Off Duty': 'bg-[var(--surface-base)] text-[var(--content-muted)] border-[var(--divider-subtle)]'
     };
-    return map[status] || 'bg-slate-100 text-slate-600 border-slate-200';
+    return map[status] || 'bg-[var(--surface-base)] text-[var(--content-muted)] border-[var(--divider-subtle)]';
   };
 
   const formatCurrency = (val) => {
@@ -235,12 +235,12 @@ export default function FuelExpenses({ currentUser, readOnly }) {
 
       {/* Vehicle Filter */}
       <div className="flex items-center gap-3">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Filter by Vehicle</label>
+        <Filter className="w-4 h-4 text-[var(--content-muted)]" />
+        <label className="text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider">Filter by Vehicle</label>
         <select
           value={vehicleFilter}
           onChange={(e) => setVehicleFilter(e.target.value)}
-          className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[220px]"
+          className="p-2 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[220px]"
         >
           <option value="">All Vehicles</option>
           {vehicles.map(v => (
@@ -250,19 +250,19 @@ export default function FuelExpenses({ currentUser, readOnly }) {
       </div>
 
       {/* Section 1: Fuel Logs */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)]">
+        <div className="p-6 border-b border-[var(--divider-subtle)] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
               <Fuel className="w-4 h-4 text-amber-600" />
             </div>
-            <h3 className="text-base font-bold text-slate-800">Fuel Logs</h3>
-            <span className="text-xs text-slate-400 font-semibold">{fuelLogs.length} entries</span>
+            <h3 className="text-base font-bold text-[var(--content-primary)]">Fuel Logs</h3>
+            <span className="text-xs text-[var(--content-muted)] font-semibold">{fuelLogs.length} entries</span>
           </div>
             {!readOnly && (
               <button
                 onClick={() => { setShowFuelModal(true); setFuelFormErrors({}); }}
-                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Log Fuel Entry</span>
@@ -273,34 +273,34 @@ export default function FuelExpenses({ currentUser, readOnly }) {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50/80">
-                <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vehicle</th>
-                <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Liters</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Fuel Cost</th>
+              <tr className="bg-[var(--surface-panel)]/80">
+                <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Vehicle</th>
+                <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Liters</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Fuel Cost</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {fuelLogs.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-slate-400 text-sm">No fuel logs found.</td>
+                  <td colSpan="4" className="px-6 py-12 text-center text-[var(--content-muted)] text-sm">No fuel logs found.</td>
                 </tr>
               ) : fuelLogs.map(log => (
-                <tr key={log._id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={log._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
                   <td className="px-6 py-3.5 text-sm font-medium text-slate-700">
                     <div className="flex items-center gap-2">
-                      <Truck className="w-3.5 h-3.5 text-slate-400" />
+                      <Truck className="w-3.5 h-3.5 text-[var(--content-muted)]" />
                       {log.vehicle?.registrationNumber || 'Unknown'}
                     </div>
                   </td>
-                  <td className="px-6 py-3.5 text-sm text-slate-600">
+                  <td className="px-6 py-3.5 text-sm text-[var(--content-muted)]">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <Calendar className="w-3.5 h-3.5 text-[var(--content-muted)]" />
                       {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </td>
                   <td className="px-6 py-3.5 text-sm text-right font-medium text-slate-700">{Number(log.liters).toFixed(1)} L</td>
-                  <td className="px-6 py-3.5 text-sm text-right font-bold text-slate-800">{formatCurrency(log.cost)}</td>
+                  <td className="px-6 py-3.5 text-sm text-right font-bold text-[var(--content-primary)]">{formatCurrency(log.cost)}</td>
                 </tr>
               ))}
             </tbody>
@@ -309,19 +309,19 @@ export default function FuelExpenses({ currentUser, readOnly }) {
       </div>
 
       {/* Section 2: Other Expenses — Toll/Misc */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)]">
+        <div className="p-6 border-b border-[var(--divider-subtle)] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center">
               <Receipt className="w-4 h-4 text-violet-600" />
             </div>
-            <h3 className="text-base font-bold text-slate-800">Other Expenses — Toll/Misc</h3>
-            <span className="text-xs text-slate-400 font-semibold">{expenses.length} entries</span>
+            <h3 className="text-base font-bold text-[var(--content-primary)]">Other Expenses — Toll/Misc</h3>
+            <span className="text-xs text-[var(--content-muted)] font-semibold">{expenses.length} entries</span>
           </div>
             {!readOnly && (
               <button
                 onClick={() => { setShowExpenseModal(true); setExpenseFormErrors({}); }}
-                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Log Trip Expense</span>
@@ -332,29 +332,29 @@ export default function FuelExpenses({ currentUser, readOnly }) {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50/80">
-                <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trip</th>
-                <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vehicle</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Toll</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Other</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Maint. (Linked)</th>
-                <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+              <tr className="bg-[var(--surface-panel)]/80">
+                <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Trip</th>
+                <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Vehicle</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Toll</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Other</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Maint. (Linked)</th>
+                <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Total</th>
+                <th className="px-6 py-3 text-center text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {expenses.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 text-sm">No expenses found.</td>
+                  <td colSpan="7" className="px-6 py-12 text-center text-[var(--content-muted)] text-sm">No expenses found.</td>
                 </tr>
               ) : expenses.map(exp => (
-                <tr key={exp._id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={exp._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
                   <td className="px-6 py-3.5 text-sm font-medium text-slate-700">{exp.trip?.tripCode || '—'}</td>
-                  <td className="px-6 py-3.5 text-sm text-slate-600">{exp.vehicle?.registrationNumber || 'Unknown'}</td>
-                  <td className="px-6 py-3.5 text-sm text-right text-slate-600">{formatCurrency(exp.toll)}</td>
-                  <td className="px-6 py-3.5 text-sm text-right text-slate-600">{formatCurrency(exp.other)}</td>
-                  <td className="px-6 py-3.5 text-sm text-right text-slate-500 italic">{formatCurrency(exp.maintenanceLinked)}</td>
-                  <td className="px-6 py-3.5 text-sm text-right font-bold text-slate-800">{formatCurrency(exp.total)}</td>
+                  <td className="px-6 py-3.5 text-sm text-[var(--content-muted)]">{exp.vehicle?.registrationNumber || 'Unknown'}</td>
+                  <td className="px-6 py-3.5 text-sm text-right text-[var(--content-muted)]">{formatCurrency(exp.toll)}</td>
+                  <td className="px-6 py-3.5 text-sm text-right text-[var(--content-muted)]">{formatCurrency(exp.other)}</td>
+                  <td className="px-6 py-3.5 text-sm text-right text-[var(--content-muted)] italic">{formatCurrency(exp.maintenanceLinked)}</td>
+                  <td className="px-6 py-3.5 text-sm text-right font-bold text-[var(--content-primary)]">{formatCurrency(exp.total)}</td>
                   <td className="px-6 py-3.5 text-center">
                     <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${getStatusBadge(exp.status)}`}>
                       {exp.status || 'Available'}
@@ -368,10 +368,10 @@ export default function FuelExpenses({ currentUser, readOnly }) {
       </div>
 
       {/* Section 3: Total Operational Cost Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 rounded-xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 rounded-xl p-6 text-[var(--content-primary)] shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Operational Cost (Auto)</div>
+            <div className="text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Total Operational Cost (Auto)</div>
             <div className="text-sm text-slate-300">
               Fuel ({formatCurrency(operationalCost.fuelCost)}) + Maintenance ({formatCurrency(operationalCost.maintenanceCost)})
             </div>
@@ -385,17 +385,17 @@ export default function FuelExpenses({ currentUser, readOnly }) {
 
       {/* ---- FUEL LOG MODAL ---- */}
       {showFuelModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transform transition-all">
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 bg-[var(--surface-topbar)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)] transform transition-all">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center">
               <h3 className="text-lg font-bold">Log Fuel</h3>
-              <button onClick={() => setShowFuelModal(false)} className="text-slate-400 hover:text-white transition-colors text-xl font-bold">&times;</button>
+              <button onClick={() => setShowFuelModal(false)} className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors text-xl font-bold">&times;</button>
             </div>
             <form onSubmit={handleFuelSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle *</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Vehicle *</label>
                 <select name="vehicle" value={fuelForm.vehicle} onChange={handleFuelChange}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required>
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required>
                   <option value="">Select Vehicle</option>
                   {vehicles.map(v => (
                     <option key={v._id} value={v._id}>{v.registrationNumber} — {v.type}</option>
@@ -404,35 +404,35 @@ export default function FuelExpenses({ currentUser, readOnly }) {
                 {fuelFormErrors.vehicle && <p className="text-red-500 text-xs mt-1">{fuelFormErrors.vehicle}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Liters *</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Liters *</label>
                 <input type="number" name="liters" value={fuelForm.liters} onChange={handleFuelChange} step="0.1" min="0.1" max="1999"
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g. 45.5" required />
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g. 45.5" required />
                 {fuelFormErrors.liters && <p className="text-red-500 text-xs mt-1">{fuelFormErrors.liters}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cost (₹) *</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Cost (₹) *</label>
                 <input type="number" name="cost" value={fuelForm.cost} onChange={handleFuelChange} step="0.01" min="0.01"
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g. 4500" required />
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g. 4500" required />
                 {fuelFormErrors.cost && <p className="text-red-500 text-xs mt-1">{fuelFormErrors.cost}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Date *</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Date *</label>
                 <input type="date" name="date" value={fuelForm.date} onChange={handleFuelChange}
                   max={new Date().toISOString().split('T')[0]}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required />
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required />
                 {fuelFormErrors.date && <p className="text-red-500 text-xs mt-1">{fuelFormErrors.date}</p>}
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={Object.keys(fuelFormErrors).length > 0}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all ${
                     Object.keys(fuelFormErrors).length > 0
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10'
+                      ? 'bg-slate-200 text-[var(--content-muted)] cursor-not-allowed shadow-none'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] shadow-indigo-600/10'
                   }`}>
                   Log Fuel Entry
                 </button>
                 <button type="button" onClick={() => setShowFuelModal(false)}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all">
+                  className="px-4 py-2.5 border border-[var(--divider-subtle)] text-[var(--content-muted)] rounded-lg text-sm font-semibold hover:bg-[var(--surface-panel)] transition-all">
                   Cancel
                 </button>
               </div>
@@ -443,17 +443,17 @@ export default function FuelExpenses({ currentUser, readOnly }) {
 
       {/* ---- EXPENSE MODAL ---- */}
       {showExpenseModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transform transition-all">
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 bg-[var(--surface-topbar)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)] transform transition-all">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center">
               <h3 className="text-lg font-bold">Add Expense</h3>
-              <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 hover:text-white transition-colors text-xl font-bold">&times;</button>
+              <button onClick={() => setShowExpenseModal(false)} className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors text-xl font-bold">&times;</button>
             </div>
             <form onSubmit={handleExpenseSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Trip (Optional)</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Trip (Optional)</label>
                 <select name="trip" value={expenseForm.trip} onChange={handleExpenseChange}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none">
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none">
                   <option value="">No Trip (standalone expense)</option>
                   {trips.map(t => (
                     <option key={t._id} value={t._id}>{t.tripCode} — {t.source} → {t.destination}</option>
@@ -461,9 +461,9 @@ export default function FuelExpenses({ currentUser, readOnly }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle *</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Vehicle *</label>
                 <select name="vehicle" value={expenseForm.vehicle} onChange={handleExpenseChange}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required>
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" required>
                   <option value="">Select Vehicle</option>
                   {vehicles.map(v => (
                     <option key={v._id} value={v._id}>{v.registrationNumber} — {v.type}</option>
@@ -473,20 +473,20 @@ export default function FuelExpenses({ currentUser, readOnly }) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Toll (₹)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Toll (₹)</label>
                   <input type="number" name="toll" value={expenseForm.toll} onChange={handleExpenseChange} step="0.01" min="0"
-                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" />
+                    className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" />
                   {expenseFormErrors.toll && <p className="text-red-500 text-xs mt-1">{expenseFormErrors.toll}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Other (₹)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Other (₹)</label>
                   <input type="number" name="other" value={expenseForm.other} onChange={handleExpenseChange} step="0.01" min="0"
-                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" />
+                    className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" />
                   {expenseFormErrors.other && <p className="text-red-500 text-xs mt-1">{expenseFormErrors.other}</p>}
                 </div>
               </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div className="text-xs text-slate-500 italic">
+              <div className="bg-[var(--surface-panel)] p-3 rounded-lg border border-[var(--divider-subtle)]">
+                <div className="text-xs text-[var(--content-muted)] italic">
                   <strong>Maintenance (Linked)</strong> and <strong>Total</strong> are auto-computed by the server from real maintenance records — not manually editable.
                 </div>
               </div>
@@ -494,13 +494,13 @@ export default function FuelExpenses({ currentUser, readOnly }) {
                 <button type="submit" disabled={Object.keys(expenseFormErrors).length > 0}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all ${
                     Object.keys(expenseFormErrors).length > 0
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10'
+                      ? 'bg-slate-200 text-[var(--content-muted)] cursor-not-allowed shadow-none'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] shadow-indigo-600/10'
                   }`}>
                   Create Expense
                 </button>
                 <button type="button" onClick={() => setShowExpenseModal(false)}
-                  className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all">
+                  className="px-4 py-2.5 border border-[var(--divider-subtle)] text-[var(--content-muted)] rounded-lg text-sm font-semibold hover:bg-[var(--surface-panel)] transition-all">
                   Cancel
                 </button>
               </div>

@@ -15,6 +15,18 @@ const driverSchema = new mongoose.Schema({
     type: String, 
     enum: ['Available', 'On Trip', 'Off Duty', 'Suspended'], 
     default: 'Available'
+  },
+  bloodGroup: {
+    type: String,
+    enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", "Unknown"],
+    default: "Unknown"
+  },
+  emergencyContactName: {
+    type: String,
+    minlength: 2
+  },
+  emergencyContactNumber: {
+    type: String
   }
 }, { timestamps: true });
 

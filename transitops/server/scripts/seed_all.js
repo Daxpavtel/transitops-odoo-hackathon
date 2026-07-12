@@ -29,10 +29,10 @@ const next60Days = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
 const pastDate = new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000);
 
 const seedDrivers = [
-  { name: "Rajesh Kumar", licenseNumber: "DL1420110012345", licenseCategory: "HMV", licenseExpiry: next60Days, contact: "9876543210", safetyScore: 95, status: "Available" },
-  { name: "Amit Sharma", licenseNumber: "MH1220150098765", licenseCategory: "LMV", licenseExpiry: next15Days, contact: "8765432109", safetyScore: 88, status: "Available" },
-  { name: "Vikram Singh", licenseNumber: "KA0320100045678", licenseCategory: "Heavy Trailer", licenseExpiry: pastDate, contact: "7654321098", safetyScore: 72, status: "Suspended" },
-  { name: "Suresh Raina", licenseNumber: "HR5520180011223", licenseCategory: "MCWG", licenseExpiry: next60Days, contact: "6543210987", safetyScore: 91, status: "Off Duty" }
+  { name: "Rajesh Kumar", licenseNumber: "DL1420110012345", licenseCategory: "HMV", licenseExpiry: next60Days, contact: "9876543210", safetyScore: 95, status: "Available", bloodGroup: "O+", emergencyContactName: "Priya Kumar", emergencyContactNumber: "9123456780" },
+  { name: "Amit Sharma", licenseNumber: "MH1220150098765", licenseCategory: "LMV", licenseExpiry: next15Days, contact: "8765432109", safetyScore: 88, status: "Available", bloodGroup: "B+", emergencyContactName: "Sunita Sharma", emergencyContactNumber: "9876123450" },
+  { name: "Vikram Singh", licenseNumber: "KA0320100045678", licenseCategory: "Heavy Trailer", licenseExpiry: pastDate, contact: "7654321098", safetyScore: 72, status: "Suspended", bloodGroup: "A-", emergencyContactName: "Anjali Singh", emergencyContactNumber: "9988776655" },
+  { name: "Suresh Raina", licenseNumber: "HR5520180011223", licenseCategory: "MCWG", licenseExpiry: next60Days, contact: "6543210987", safetyScore: 91, status: "Off Duty", bloodGroup: "AB+", emergencyContactName: "Ramesh Raina", emergencyContactNumber: "9876543210" }
 ];
 
 const seedDB = async () => {

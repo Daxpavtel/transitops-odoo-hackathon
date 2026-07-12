@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
   },
   failedLoginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
-  lastFailedLoginAt: { type: Date, default: null }
+  lastFailedLoginAt: { type: Date, default: null },
+  themePreference: { type: String, enum: ['light', 'dark'], default: 'dark' }
 }, { 
   timestamps: true,
   toJSON: {

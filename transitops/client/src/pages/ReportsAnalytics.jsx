@@ -116,10 +116,10 @@ export default function ReportsAnalytics({ currentUser }) {
 
   if (!isAuthorized) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-col items-center justify-center py-16 bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)]">
         <ShieldAlert className="w-12 h-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-bold text-slate-800">Access Denied</h3>
-        <p className="text-sm text-slate-500 mt-2 max-w-md text-center">
+        <h3 className="text-lg font-bold text-[var(--content-primary)]">Access Denied</h3>
+        <p className="text-sm text-[var(--content-muted)] mt-2 max-w-md text-center">
           The reports dashboard is restricted to Financial Analyst and Fleet Manager roles. Please use the simulator in the sidebar to switch roles.
         </p>
       </div>
@@ -138,32 +138,32 @@ export default function ReportsAnalytics({ currentUser }) {
   return (
     <div className="space-y-6">
       {/* Filters & Export Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+      <div className="bg-[var(--surface-card)] p-4 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-semibold text-slate-600">Date Range:</span>
+            <Calendar className="w-4 h-4 text-[var(--content-muted)]" />
+            <span className="text-sm font-semibold text-[var(--content-muted)]">Date Range:</span>
           </div>
           <div className="flex items-center gap-2">
             <input 
               type="date" 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className="bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
             />
-            <span className="text-xs text-slate-400">to</span>
+            <span className="text-xs text-[var(--content-muted)]">to</span>
             <input 
               type="date" 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className="bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
         >
           <Download className="w-4 h-4" />
           <span>Export CSV</span>
@@ -171,16 +171,16 @@ export default function ReportsAnalytics({ currentUser }) {
       </div>
 
       {/* Loading & Errors */}
-      {loading && <div className="text-center py-6 text-slate-500 text-sm font-medium">Updating analytics report...</div>}
+      {loading && <div className="text-center py-6 text-[var(--content-muted)] text-sm font-medium">Updating analytics report...</div>}
       {errorMsg && <div className="p-4 bg-red-50 text-red-700 border-l-4 border-red-500 rounded text-sm">{errorMsg}</div>}
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Total Revenue */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Revenue</span>
-            <span className="text-2xl font-bold text-slate-800 mt-2 block">${kpis.totalRevenue.toLocaleString()}</span>
+            <span className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider block">Total Revenue</span>
+            <span className="text-2xl font-bold text-[var(--content-primary)] mt-2 block">${kpis.totalRevenue.toLocaleString()}</span>
           </div>
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
             <DollarSign className="w-6 h-6" />
@@ -188,10 +188,10 @@ export default function ReportsAnalytics({ currentUser }) {
         </div>
 
         {/* Total Expense */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Expense</span>
-            <span className="text-2xl font-bold text-slate-800 mt-2 block">${kpis.totalExpense.toLocaleString()}</span>
+            <span className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider block">Total Expense</span>
+            <span className="text-2xl font-bold text-[var(--content-primary)] mt-2 block">${kpis.totalExpense.toLocaleString()}</span>
           </div>
           <div className="p-3 bg-red-50 text-red-600 rounded-lg">
             <DollarSign className="w-6 h-6" />
@@ -199,9 +199,9 @@ export default function ReportsAnalytics({ currentUser }) {
         </div>
 
         {/* Net Profit */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Net Profit</span>
+            <span className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider block">Net Profit</span>
             <span className={`text-2xl font-bold mt-2 block ${kpis.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               ${kpis.netProfit.toLocaleString()}
             </span>
@@ -212,11 +212,11 @@ export default function ReportsAnalytics({ currentUser }) {
         </div>
 
         {/* Fleet Avg Efficiency */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Fleet Avg Efficiency</span>
-            <span className="text-2xl font-bold text-slate-800 mt-2 block">
-              {kpis.fleetAvgEfficiency} <span className="text-xs font-normal text-slate-500">L/km</span>
+            <span className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider block">Fleet Avg Efficiency</span>
+            <span className="text-2xl font-bold text-[var(--content-primary)] mt-2 block">
+              {kpis.fleetAvgEfficiency} <span className="text-xs font-normal text-[var(--content-muted)]">L/km</span>
             </span>
           </div>
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
@@ -228,8 +228,8 @@ export default function ReportsAnalytics({ currentUser }) {
       {/* CHARTS CONTAINER */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Line Chart: Monthly Revenue vs Profit */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-base font-bold text-slate-800 mb-4">Monthly Revenue vs Profit</h3>
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)]">
+          <h3 className="text-base font-bold text-[var(--content-primary)] mb-4">Monthly Revenue vs Profit</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyPipeline} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
@@ -246,8 +246,8 @@ export default function ReportsAnalytics({ currentUser }) {
         </div>
 
         {/* Bar Chart: Top Costliest Vehicles */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-base font-bold text-slate-800 mb-4">Top Costliest Vehicles</h3>
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)]">
+          <h3 className="text-base font-bold text-[var(--content-primary)] mb-4">Top Costliest Vehicles</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topCostliestVehicles} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>

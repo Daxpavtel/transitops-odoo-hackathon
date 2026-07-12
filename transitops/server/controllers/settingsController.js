@@ -71,3 +71,24 @@ exports.updateRBACMatrix = async (req, res, next) => {
     next(error);
   }
 };
+
+// PUT /api/settings/theme
+exports.updateTheme = async (req, res, next) => {
+  try {
+    const { themePreference } = req.body;
+    if (!['light', 'dark'].includes(themePreference)) {
+      return res.status(400).json({ success: false, errors: [{ field: 'themePreference', message: 'Invalid theme.' }] });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.themePreference = themePreference;
+    await user.save();
+
+    res.json({ success: true, data: { themePreference: user.themePreference } });
+  } catch (error) {
+    next(error);
+  }
+};

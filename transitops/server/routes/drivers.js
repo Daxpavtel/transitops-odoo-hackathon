@@ -36,7 +36,25 @@ const driverValidationRules = [
 
   body('status')
     .optional()
-    .isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status value.')
+    .isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status value.'),
+
+  body('bloodGroup')
+    .optional()
+    .isIn(["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", "Unknown"]).withMessage('Invalid blood group.'),
+
+  body().custom((value, { req }) => {
+    const { emergencyContactName, emergencyContactNumber } = req.body;
+    if (emergencyContactName && !emergencyContactNumber) {
+      throw new Error('Both emergency contact name and number are required together');
+    }
+    if (!emergencyContactName && emergencyContactNumber) {
+      throw new Error('Both emergency contact name and number are required together');
+    }
+    if (emergencyContactNumber && !/^\d{10}$/.test(emergencyContactNumber.trim())) {
+      throw new Error('Emergency contact number must be a valid 10-digit phone number.');
+    }
+    return true;
+  })
 ];
 
 const driverUpdateValidationRules = [
@@ -70,7 +88,25 @@ const driverUpdateValidationRules = [
 
   body('status')
     .optional()
-    .isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status value.')
+    .isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status value.'),
+
+  body('bloodGroup')
+    .optional()
+    .isIn(["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", "Unknown"]).withMessage('Invalid blood group.'),
+
+  body().custom((value, { req }) => {
+    const { emergencyContactName, emergencyContactNumber } = req.body;
+    if (emergencyContactName && !emergencyContactNumber) {
+      throw new Error('Both emergency contact name and number are required together');
+    }
+    if (!emergencyContactName && emergencyContactNumber) {
+      throw new Error('Both emergency contact name and number are required together');
+    }
+    if (emergencyContactNumber && !/^\d{10}$/.test(emergencyContactNumber.trim())) {
+      throw new Error('Emergency contact number must be a valid 10-digit phone number.');
+    }
+    return true;
+  })
 ];
 
 router.use(auth);

@@ -3,7 +3,7 @@ import { Save, AlertTriangle, ShieldAlert, CheckCircle, Navigation } from 'lucid
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-export default function Settings({ currentUser, onBack }) {
+export default function Settings({ currentUser, onBack, theme, toggleTheme }) {
   const [general, setGeneral] = useState({ depotName: '', currency: 'INR', distanceUnit: 'km' });
   const [matrix, setMatrix] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +15,8 @@ export default function Settings({ currentUser, onBack }) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-4">
         <ShieldAlert className="w-16 h-16 text-red-500" />
-        <h2 className="text-2xl font-bold text-slate-800">Access Denied</h2>
-        <p className="text-slate-500">Only Fleet Managers can access Settings.</p>
+        <h2 className="text-2xl font-bold text-[var(--content-primary)]">Access Denied</h2>
+        <p className="text-[var(--content-muted)]">Only Fleet Managers can access Settings.</p>
         <button onClick={onBack} className="text-indigo-600 hover:underline">Return to Dashboard</button>
       </div>
     );
@@ -120,20 +120,20 @@ export default function Settings({ currentUser, onBack }) {
   };
 
   if (loading) {
-    return <div className="p-8 text-slate-500 animate-pulse">Loading settings...</div>;
+    return <div className="p-8 text-[var(--content-muted)] animate-pulse">Loading settings...</div>;
   }
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">System Settings</h2>
-          <p className="text-sm text-slate-500 mt-1">Configure global preferences and role-based access controls.</p>
+          <h2 className="text-2xl font-bold text-[var(--content-primary)] tracking-tight">System Settings</h2>
+          <p className="text-sm text-[var(--content-muted)] mt-1">Configure global preferences and role-based access controls.</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saveStatus === 'saving'}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold text-white shadow transition-all ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold text-[var(--content-primary)] shadow transition-all ${
             saveStatus === 'success' ? 'bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'
           }`}
         >
@@ -156,66 +156,77 @@ export default function Settings({ currentUser, onBack }) {
       )}
 
       {/* General Settings */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+      <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--divider-subtle)] flex items-center gap-2">
           <Navigation className="w-4 h-4 text-indigo-500" />
-          <h3 className="text-base font-bold text-slate-800">General Configuration</h3>
+          <h3 className="text-base font-bold text-[var(--content-primary)]">General Configuration</h3>
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Depot Name</label>
+            <label className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider">Depot Name</label>
             <input
               type="text"
               name="depotName"
               value={general.depotName}
               onChange={handleGeneralChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full px-4 py-2 bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg text-sm text-[var(--content-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               placeholder="e.g. Central Depot"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Currency</label>
+            <label className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider">Currency</label>
             <select
               name="currency"
               value={general.currency}
               onChange={handleGeneralChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full px-4 py-2 bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg text-sm text-[var(--content-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             >
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Distance Unit</label>
+            <label className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider">Distance Unit</label>
             <select
               name="distanceUnit"
               value={general.distanceUnit}
               onChange={handleGeneralChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full px-4 py-2 bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg text-sm text-[var(--content-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             >
               <option value="km">Kilometers (km)</option>
               <option value="miles">Miles (mi)</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider">Theme</label>
+            <select
+              value={theme}
+              onChange={toggleTheme}
+              className="w-full px-4 py-2 bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg text-sm text-[var(--content-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            >
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* RBAC Matrix */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--divider-subtle)] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-emerald-500" />
-            <h3 className="text-base font-bold text-slate-800">Role-Based Access (RBAC)</h3>
+            <h3 className="text-base font-bold text-[var(--content-primary)]">Role-Based Access (RBAC)</h3>
           </div>
-          <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded">Security Critical</span>
+          <span className="text-xs font-medium text-[var(--content-muted)] bg-[var(--surface-panel)] px-2 py-1 rounded">Security Critical</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
+            <thead className="bg-[var(--surface-panel)]/80 border-b border-[var(--divider-subtle)]">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/4">Role</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider w-1/4">Role</th>
                 {modules.map(mod => (
-                  <th key={mod.key} className="px-4 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <th key={mod.key} className="px-4 py-4 text-center text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider">
                     {mod.label}
                   </th>
                 ))}
@@ -223,8 +234,8 @@ export default function Settings({ currentUser, onBack }) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {matrix.map((row, roleIdx) => (
-                <tr key={row.role} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-semibold text-slate-800">{row.role}</td>
+                <tr key={row.role} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
+                  <td className="px-6 py-4 font-semibold text-[var(--content-primary)]">{row.role}</td>
                   {modules.map(mod => (
                     <td key={mod.key} className="px-4 py-4 text-center">
                       <select
@@ -235,7 +246,7 @@ export default function Settings({ currentUser, onBack }) {
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-700 focus:ring-emerald-500/20'
                             : row.permissions[mod.key] === 'view'
                             ? 'bg-amber-50 border-amber-200 text-amber-700 focus:ring-amber-500/20'
-                            : 'bg-slate-100 border-slate-200 text-slate-400 focus:ring-slate-500/20'
+                            : 'bg-[var(--surface-base)] border-[var(--divider-subtle)] text-[var(--content-muted)] focus:ring-slate-500/20'
                         }`}
                       >
                         <option value="edit">Edit</option>

@@ -18,7 +18,9 @@ import {
   AlertCircle,
   Wrench,
   BarChart3,
-  Compass
+  Compass,
+  Sun,
+  Moon
 } from 'lucide-react';
 import ReportsAnalytics from './pages/ReportsAnalytics';
 import TripDispatcher from './pages/TripDispatcher';
@@ -35,6 +37,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authView, setAuthView] = useState('login');
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [theme, setTheme] = useState(localStorage.getItem('themePreference') || 'dark');
   
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,6 +78,25 @@ function App() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = async () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('themePreference', newTheme);
+    try {
+      await fetch(`${API_BASE_URL}/settings/theme`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themePreference: newTheme })
+      });
+    } catch (e) {
+      console.error('Failed to save theme', e);
+    }
+  };
+
   // Derive active permissions
   const permissions = rbacMatrix.find(r => r.role === currentUser.role)?.permissions || {
     fleet: 'hidden', drivers: 'hidden', trips: 'hidden', fuelExpenses: 'hidden', analytics: 'hidden'
@@ -90,6 +112,8 @@ function App() {
   // Modals & Form State
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [showDriverModal, setShowDriverModal] = useState(false);
+  const [showDriverDetailsModal, setShowDriverDetailsModal] = useState(false);
+  const [selectedDriverDetails, setSelectedDriverDetails] = useState(null);
   const [editingItem, setEditingItem] = useState(null); // null or object
 
   // Form Fields & Validation
@@ -110,7 +134,10 @@ function App() {
     licenseExpiry: '',
     contact: '',
     safetyScore: '100',
-    status: 'Available'
+    status: 'Available',
+    bloodGroup: 'Unknown',
+    emergencyContactName: '',
+    emergencyContactNumber: ''
   });
 
   const [maintenanceForm, setMaintenanceForm] = useState({
@@ -141,7 +168,7 @@ function App() {
     try {
       const headers = await getAuthHeaders();
       if (activeTab === 'vehicles') {
-        const res = await fetch(`${API_BASE_URL}/vehicles`, { headers });
+        const res = await fetch(`${API_BASE_URL}/vehicles`, { headers, credentials: 'include' });
         const result = await res.json();
         if (result.success) {
           setVehicles(result.data);
@@ -436,7 +463,10 @@ function App() {
       licenseExpiry: '',
       contact: '',
       safetyScore: '100',
-      status: 'Available'
+      status: 'Available',
+      bloodGroup: 'Unknown',
+      emergencyContactName: '',
+      emergencyContactNumber: ''
     });
     setFormErrors({});
     setShowDriverModal(true);
@@ -453,7 +483,10 @@ function App() {
       licenseExpiry: formattedExpiry,
       contact: driver.contact,
       safetyScore: driver.safetyScore.toString(),
-      status: driver.status
+      status: driver.status,
+      bloodGroup: driver.bloodGroup || 'Unknown',
+      emergencyContactName: driver.emergencyContactName || '',
+      emergencyContactNumber: driver.emergencyContactNumber || ''
     });
     setFormErrors({});
     setShowDriverModal(true);
@@ -617,7 +650,7 @@ function App() {
         border = 'border-red-200';
         break;
       case 'Off Duty':
-        bg = 'bg-slate-100';
+        bg = 'bg-[var(--surface-base)]';
         text = 'text-slate-700';
         border = 'border-slate-300';
         break;
@@ -666,7 +699,7 @@ function App() {
         </div>
       );
     } else {
-      return <span className="text-slate-600">{formattedDate}</span>;
+      return <span className="text-[var(--content-muted)]">{formattedDate}</span>;
     }
   };
 
@@ -724,7 +757,7 @@ function App() {
   };
 
   if (loadingAuth) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-semibold text-slate-500">Loading TransitOps...</div>;
+    return <div className="min-h-screen bg-[var(--surface-panel)] flex items-center justify-center font-semibold text-[var(--content-muted)]">Loading TransitOps...</div>;
   }
 
   if (!currentUser) {
@@ -736,18 +769,18 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50 font-sans text-slate-800">
+    <div className="min-h-screen flex bg-[var(--surface-panel)] font-sans text-[var(--content-primary)]">
       {/* 1. DARK SIDEBAR */}
-      <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col justify-between shrink-0 shadow-xl">
+      <aside className="w-64 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex flex-col justify-between shrink-0 shadow-xl">
         <div>
           {/* Brand header */}
-          <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-lg text-white">
+          <div className="p-6 border-b border-[var(--divider-subtle)] flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-lg text-[var(--content-primary)]">
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-white leading-none">TransitOps</h1>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Operations Portal</span>
+              <h1 className="text-xl font-bold tracking-tight text-[var(--content-primary)] leading-none">TransitOps</h1>
+              <span className="text-[10px] text-[var(--content-muted)] font-semibold tracking-wider uppercase">Operations Portal</span>
             </div>
           </div>
 
@@ -758,8 +791,8 @@ function App() {
                 onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'dashboard' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <BarChart3 className="w-5 h-5" />
@@ -772,8 +805,8 @@ function App() {
                 onClick={() => { setActiveTab('vehicles'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'vehicles' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <Truck className="w-5 h-5" />
@@ -786,8 +819,8 @@ function App() {
                 onClick={() => { setActiveTab('drivers'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'drivers' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <Users className="w-5 h-5" />
@@ -800,8 +833,8 @@ function App() {
                 onClick={() => { setActiveTab('trips'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'trips' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <Compass className="w-5 h-5" />
@@ -814,8 +847,8 @@ function App() {
                 onClick={() => { setActiveTab('maintenance'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'maintenance' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <Wrench className="w-5 h-5" />
@@ -828,8 +861,8 @@ function App() {
                 onClick={() => { setActiveTab('fuelexpenses'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'fuelexpenses' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <DollarSign className="w-5 h-5" />
@@ -842,8 +875,8 @@ function App() {
                 onClick={() => { setActiveTab('reports'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'reports' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <BarChart3 className="w-5 h-5" />
@@ -856,8 +889,8 @@ function App() {
                 onClick={() => { setActiveTab('settings'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'settings' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
                 }`}
               >
                 <AlertCircle className="w-5 h-5" />
@@ -873,10 +906,10 @@ function App() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* 2. TOPBAR */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
+        <header className="h-16 bg-[var(--surface-card)] border-b border-[var(--divider-subtle)] flex items-center justify-between px-8 shadow-sm">
           {/* Top Bar Left: Search */}
           <div className="relative w-80">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--content-muted)]">
               <Search className="w-4 h-4" />
             </span>
             <input
@@ -892,14 +925,21 @@ function App() {
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             />
           </div>
 
           {/* Top Bar Right: Profile */}
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 bg-[var(--surface-panel)] border border-[var(--divider-subtle)] text-[var(--content-muted)] hover:text-[var(--content-primary)] rounded-full transition-colors"
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <div className="text-right">
-              <div className="text-sm font-semibold text-slate-800">{currentUser.name}</div>
+              <div className="text-sm font-semibold text-[var(--content-primary)]">{currentUser.name}</div>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                 {currentUser.role}
               </span>
@@ -909,9 +949,9 @@ function App() {
             </div>
             <button 
               onClick={handleLogout}
-              className="text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-2 border-l border-slate-200 pl-4"
+              className="ml-2 text-xs font-semibold text-red-500 hover:text-red-600 hover:underline flex items-center gap-1"
             >
-              Logout
+              <Trash2 className="w-3 h-3" /> Logout
             </button>
           </div>
         </header>
@@ -923,7 +963,7 @@ function App() {
             {/* Header and Add Button row */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-2xl font-bold text-[var(--content-primary)] tracking-tight">
                   {activeTab === 'vehicles' 
                     ? 'Vehicle Registry' 
                     : activeTab === 'drivers' 
@@ -932,7 +972,7 @@ function App() {
                         ? 'Vehicle Maintenance Workflow'
                         : 'Reports & Analytics'}
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-[var(--content-muted)] mt-1">
                   {activeTab === 'vehicles' 
                     ? 'Manage your fleet registry, odometer details, load limits, and deployment states.' 
                     : activeTab === 'drivers'
@@ -947,7 +987,7 @@ function App() {
                 {activeTab === 'vehicles' && permissions.fleet === 'edit' && (
                   <button
                     onClick={handleOpenAddVehicle}
-                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Vehicle</span>
@@ -956,7 +996,7 @@ function App() {
                 {activeTab === 'drivers' && permissions.drivers === 'edit' && (
                   <button
                     onClick={handleOpenAddDriver}
-                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
+                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Driver</span>
@@ -977,17 +1017,17 @@ function App() {
 
             {/* 3. VEHICLE REGISTRY MODULE */}
             {activeTab === 'vehicles' && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] overflow-hidden">
                 {/* Filters header */}
-                <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+                <div className="p-4 bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] flex flex-wrap gap-4 items-center justify-between">
                   <div className="flex gap-4">
                     {/* Type Filter */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Type</label>
+                      <label className="block text-[10px] font-bold text-[var(--content-muted)] uppercase tracking-wider mb-1">Filter Type</label>
                       <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        className="bg-[var(--surface-card)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                       >
                         <option value="All">All Types</option>
                         <option value="Van">Van</option>
@@ -998,11 +1038,11 @@ function App() {
 
                     {/* Status Filter */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Status</label>
+                      <label className="block text-[10px] font-bold text-[var(--content-muted)] uppercase tracking-wider mb-1">Filter Status</label>
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        className="bg-[var(--surface-card)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                       >
                         <option value="All">All Statuses</option>
                         <option value="Available">Available</option>
@@ -1013,7 +1053,7 @@ function App() {
                     </div>
                   </div>
 
-                  <span className="text-xs text-slate-500 font-medium">
+                  <span className="text-xs text-[var(--content-muted)] font-medium">
                     Showing {filteredVehicles.length} of {vehicles.length} vehicles
                   </span>
                 </div>
@@ -1022,7 +1062,7 @@ function App() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                      <tr className="bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] text-xs font-semibold text-[var(--content-muted)] uppercase">
                         <th className="px-6 py-3">Reg No.</th>
                         <th className="px-6 py-3">Name/Model</th>
                         <th className="px-6 py-3">Type</th>
@@ -1036,21 +1076,21 @@ function App() {
                     <tbody className="divide-y divide-slate-100 text-sm">
                       {loading ? (
                         <tr>
-                          <td colSpan="8" className="px-6 py-12 text-center text-slate-400">Loading fleet registry data...</td>
+                          <td colSpan="8" className="px-6 py-12 text-center text-[var(--content-muted)]">Loading fleet registry data...</td>
                         </tr>
                       ) : filteredVehicles.length === 0 ? (
                         <tr>
-                          <td colSpan="8" className="px-6 py-12 text-center text-slate-400">No vehicles match filters or search parameters.</td>
+                          <td colSpan="8" className="px-6 py-12 text-center text-[var(--content-muted)]">No vehicles match filters or search parameters.</td>
                         </tr>
                       ) : (
                         filteredVehicles.map(v => (
-                          <tr key={v._id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 font-mono font-bold text-slate-900">{v.registrationNumber}</td>
+                          <tr key={v._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
+                            <td className="px-6 py-4 font-mono font-bold text-[var(--content-primary)]">{v.registrationNumber}</td>
                             <td className="px-6 py-4 font-medium text-slate-700">{v.name}</td>
-                            <td className="px-6 py-4 text-slate-600">{v.type}</td>
-                            <td className="px-6 py-4 text-right font-mono text-slate-600">{v.maxLoadCapacity.toLocaleString()}</td>
-                            <td className="px-6 py-4 text-right font-mono text-slate-600">{v.odometer.toLocaleString()}</td>
-                            <td className="px-6 py-4 text-right font-mono text-slate-600">${v.acquisitionCost.toLocaleString()}</td>
+                            <td className="px-6 py-4 text-[var(--content-muted)]">{v.type}</td>
+                            <td className="px-6 py-4 text-right font-mono text-[var(--content-muted)]">{(v.maxLoadCapacity || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right font-mono text-[var(--content-muted)]">{(v.odometer || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right font-mono text-[var(--content-muted)]">${(v.acquisitionCost || 0).toLocaleString()}</td>
                             <td className="px-6 py-4">{getStatusBadge(v.status)}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-center gap-2">
@@ -1058,14 +1098,14 @@ function App() {
                                   <>
                                     <button
                                       onClick={() => handleOpenEditVehicle(v)}
-                                      className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
+                                      className="p-1 hover:text-indigo-600 text-[var(--content-muted)] transition-colors"
                                       title="Edit"
                                     >
                                       <Edit className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteVehicle(v._id)}
-                                      className="p-1 hover:text-red-600 text-slate-400 transition-colors"
+                                      className="p-1 hover:text-red-600 text-[var(--content-muted)] transition-colors"
                                       title="Delete"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -1085,17 +1125,17 @@ function App() {
 
             {/* 4. DRIVERS & SAFETY PROFILE MODULE */}
             {activeTab === 'drivers' && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] overflow-hidden">
                 {/* Filters header */}
-                <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+                <div className="p-4 bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] flex flex-wrap gap-4 items-center justify-between">
                   <div className="flex gap-4">
                     {/* Category Filter */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter License Category</label>
+                      <label className="block text-[10px] font-bold text-[var(--content-muted)] uppercase tracking-wider mb-1">Filter License Category</label>
                       <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        className="bg-[var(--surface-card)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                       >
                         <option value="All">All Categories</option>
                         <option value="LMV">LMV</option>
@@ -1107,11 +1147,11 @@ function App() {
 
                     {/* Status Filter */}
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Status</label>
+                      <label className="block text-[10px] font-bold text-[var(--content-muted)] uppercase tracking-wider mb-1">Filter Status</label>
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        className="bg-[var(--surface-card)] border border-[var(--divider-subtle)] rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                       >
                         <option value="All">All Statuses</option>
                         <option value="Available">Available</option>
@@ -1122,7 +1162,7 @@ function App() {
                     </div>
                   </div>
 
-                  <span className="text-xs text-slate-500 font-medium">
+                  <span className="text-xs text-[var(--content-muted)] font-medium">
                     Showing {filteredDrivers.length} of {drivers.length} drivers
                   </span>
                 </div>
@@ -1131,7 +1171,7 @@ function App() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                      <tr className="bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] text-xs font-semibold text-[var(--content-muted)] uppercase">
                         <th className="px-6 py-3">Driver Name</th>
                         <th className="px-6 py-3">License No.</th>
                         <th className="px-6 py-3">Category</th>
@@ -1146,22 +1186,31 @@ function App() {
                     <tbody className="divide-y divide-slate-100 text-sm">
                       {loading ? (
                         <tr>
-                          <td colSpan="9" className="px-6 py-12 text-center text-slate-400">Loading driver safety profiles...</td>
+                          <td colSpan="9" className="px-6 py-12 text-center text-[var(--content-muted)]">Loading driver safety profiles...</td>
                         </tr>
                       ) : filteredDrivers.length === 0 ? (
                         <tr>
-                          <td colSpan="9" className="px-6 py-12 text-center text-slate-400">No drivers match filters or search parameters.</td>
+                          <td colSpan="9" className="px-6 py-12 text-center text-[var(--content-muted)]">No drivers match filters or search parameters.</td>
                         </tr>
                       ) : (
                         filteredDrivers.map(d => (
-                          <tr key={d._id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 font-semibold text-slate-900">{d.name}</td>
-                            <td className="px-6 py-4 font-mono text-slate-600">{d.licenseNumber}</td>
-                            <td className="px-6 py-4 text-slate-600">{d.licenseCategory}</td>
+                          <tr key={d._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
+                            <td className="px-6 py-4 font-semibold text-[var(--content-primary)]">
+                              <div className="flex items-center gap-2">
+                                {d.name}
+                                {d.bloodGroup && d.bloodGroup !== 'Unknown' && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-700 border border-red-200" title="Blood Group">
+                                    {d.bloodGroup}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 font-mono text-[var(--content-muted)]">{d.licenseNumber}</td>
+                            <td className="px-6 py-4 text-[var(--content-muted)]">{d.licenseCategory}</td>
                             <td className="px-6 py-4">{getExpiryDisplay(d.licenseExpiry)}</td>
-                            <td className="px-6 py-4 text-slate-600 font-mono">{d.contact}</td>
+                            <td className="px-6 py-4 text-[var(--content-muted)] font-mono">{d.contact}</td>
                             {/* Trip Compl. % hardcoded or computed (demo can use default 95%) */}
-                            <td className="px-6 py-4 text-right font-mono text-slate-600">95%</td>
+                            <td className="px-6 py-4 text-right font-mono text-[var(--content-muted)]">95%</td>
                             <td className="px-6 py-4 text-right">
                               <span className={`font-mono font-bold ${
                                 d.safetyScore >= 90 ? 'text-emerald-600' : d.safetyScore >= 75 ? 'text-amber-600' : 'text-red-600'
@@ -1172,18 +1221,25 @@ function App() {
                             <td className="px-6 py-4">{getStatusBadge(d.status, { isExpired: d.isExpired })}</td>
                             <td className="px-6 py-4">
                               <div className="flex justify-center gap-2">
+                                <button
+                                  onClick={() => { setSelectedDriverDetails(d); setShowDriverDetailsModal(true); }}
+                                  className="p-1 hover:text-blue-600 text-[var(--content-muted)] transition-colors"
+                                  title="View Details"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                </button>
                                 {permissions.drivers === 'edit' && (
                                   <>
                                     <button
                                       onClick={() => handleOpenEditDriver(d)}
-                                      className="p-1 hover:text-indigo-600 text-slate-400 transition-colors"
+                                      className="p-1 hover:text-indigo-600 text-[var(--content-muted)] transition-colors"
                                       title="Edit"
                                     >
                                       <Edit className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteDriver(d._id)}
-                                      className="p-1 hover:text-red-600 text-slate-400 transition-colors"
+                                      className="p-1 hover:text-red-600 text-[var(--content-muted)] transition-colors"
                                       title="Delete"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -1200,7 +1256,7 @@ function App() {
                 </div>
 
                 {/* Driver Legend row at the bottom of screen 3 */}
-                <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <div className="p-4 bg-[var(--surface-panel)] border-t border-[var(--divider-subtle)] flex items-center justify-between text-xs text-[var(--content-muted)]">
                   <div className="flex items-center gap-4">
                     <span className="font-bold">Status Legend:</span>
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Available</span>
@@ -1215,19 +1271,19 @@ function App() {
             {activeTab === 'maintenance' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Panel: Log Service Record Form */}
-                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div className="lg:col-span-1 bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] p-6 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">Log Service Record</h3>
+                    <h3 className="text-lg font-bold text-[var(--content-primary)] mb-4">Log Service Record</h3>
                     <form onSubmit={handleMaintenanceSubmit} className="space-y-4">
                       {/* Vehicle selection dropdown */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle</label>
+                        <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Vehicle</label>
                         <select
                           name="vehicle"
                           value={maintenanceForm.vehicle}
                           onChange={handleMaintenanceChange}
-                          className={`w-full p-2.5 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 ${
-                            maintenanceFormErrors.vehicle ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                          className={`w-full p-2.5 border rounded-lg text-sm bg-[var(--surface-card)] focus:outline-none focus:ring-2 ${
+                            maintenanceFormErrors.vehicle ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                           }`}
                         >
                           <option value="">Select a Vehicle</option>
@@ -1244,7 +1300,7 @@ function App() {
 
                       {/* Service Type */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Service Type</label>
+                        <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Service Type</label>
                         <input
                           type="text"
                           name="serviceType"
@@ -1252,7 +1308,7 @@ function App() {
                           onChange={handleMaintenanceChange}
                           placeholder="e.g. Engine Oil Change, Brake Repair"
                           className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                            maintenanceFormErrors.serviceType ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                            maintenanceFormErrors.serviceType ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                           }`}
                         />
                         {maintenanceFormErrors.serviceType && (
@@ -1262,7 +1318,7 @@ function App() {
 
                       {/* Cost */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cost ($)</label>
+                        <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Cost ($)</label>
                         <input
                           type="number"
                           name="cost"
@@ -1270,7 +1326,7 @@ function App() {
                           onChange={handleMaintenanceChange}
                           placeholder="e.g. 350"
                           className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                            maintenanceFormErrors.cost ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                            maintenanceFormErrors.cost ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                           }`}
                         />
                         {maintenanceFormErrors.cost && (
@@ -1280,14 +1336,14 @@ function App() {
 
                       {/* Date */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Date</label>
+                        <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Date</label>
                         <input
                           type="date"
                           name="date"
                           value={maintenanceForm.date}
                           onChange={handleMaintenanceChange}
                           className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                            maintenanceFormErrors.date ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                            maintenanceFormErrors.date ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                           }`}
                         />
                         {maintenanceFormErrors.date && (
@@ -1297,12 +1353,12 @@ function App() {
 
                       {/* Status select/toggle */}
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Status</label>
+                        <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Status</label>
                         <select
                           name="status"
                           value={maintenanceForm.status}
                           onChange={handleMaintenanceChange}
-                          className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                          className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-card)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                         >
                           <option value="Active">Active</option>
                           <option value="Closed">Closed</option>
@@ -1313,7 +1369,7 @@ function App() {
                         <button
                           type="submit"
                           disabled={!isMaintenanceFormValid()}
-                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all mt-4"
+                          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-[var(--content-muted)] disabled:shadow-none transition-all mt-4"
                         >
                           Save Service Record
                         </button>
@@ -1322,9 +1378,9 @@ function App() {
                   </div>
 
                   {/* Flow Diagram */}
-                  <div className="mt-8 pt-4 border-t border-slate-100">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vehicle Maintenance Flow</h4>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-500 space-y-1">
+                  <div className="mt-8 pt-4 border-t border-[var(--divider-subtle)]">
+                    <h4 className="text-xs font-bold text-[var(--content-muted)] uppercase tracking-wider mb-2">Vehicle Maintenance Flow</h4>
+                    <div className="bg-[var(--surface-panel)] border border-[var(--divider-subtle)] rounded-lg p-3 text-xs text-[var(--content-muted)] space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-slate-700">Log Service (Active):</span>
                         <span>Available → <span className="text-amber-600 font-bold">In Shop</span></span>
@@ -1341,11 +1397,11 @@ function App() {
                 </div>
 
                 {/* Right Panel: Service Log Table */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+                <div className="lg:col-span-2 bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] overflow-hidden flex flex-col justify-between">
                   <div>
-                    <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                      <h3 className="text-base font-bold text-slate-900">Service Log</h3>
-                      <span className="text-xs text-slate-500">
+                    <div className="p-4 bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] flex items-center justify-between">
+                      <h3 className="text-base font-bold text-[var(--content-primary)]">Service Log</h3>
+                      <span className="text-xs text-[var(--content-muted)]">
                         {maintenanceLogs.length} records logged
                       </span>
                     </div>
@@ -1353,7 +1409,7 @@ function App() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                          <tr className="bg-[var(--surface-panel)] border-b border-[var(--divider-subtle)] text-xs font-semibold text-[var(--content-muted)] uppercase">
                             <th className="px-6 py-3">Vehicle</th>
                             <th className="px-6 py-3">Service Type</th>
                             <th className="px-6 py-3 text-right">Cost</th>
@@ -1365,11 +1421,11 @@ function App() {
                         <tbody className="divide-y divide-slate-100 text-sm">
                           {loading ? (
                             <tr>
-                              <td colSpan="6" className="px-6 py-12 text-center text-slate-400">Loading service logs...</td>
+                              <td colSpan="6" className="px-6 py-12 text-center text-[var(--content-muted)]">Loading service logs...</td>
                             </tr>
                           ) : maintenanceLogs.length === 0 ? (
                             <tr>
-                              <td colSpan="6" className="px-6 py-12 text-center text-slate-400">No service records found.</td>
+                              <td colSpan="6" className="px-6 py-12 text-center text-[var(--content-muted)]">No service records found.</td>
                             </tr>
                           ) : (
                             (() => {
@@ -1384,14 +1440,14 @@ function App() {
                                 count++;
 
                                 return (
-                                  <tr key={log._id} className="hover:bg-slate-50/50 transition-colors">
+                                  <tr key={log._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors">
                                     <td className="px-6 py-4">
-                                      <div className="font-mono font-bold text-slate-900">{log.vehicle?.registrationNumber || 'N/A'}</div>
-                                      <div className="text-xs text-slate-500">{log.vehicle?.name || 'N/A'}</div>
+                                      <div className="font-mono font-bold text-[var(--content-primary)]">{log.vehicle?.registrationNumber || 'N/A'}</div>
+                                      <div className="text-xs text-[var(--content-muted)]">{log.vehicle?.name || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4 text-slate-700 font-medium">{log.serviceType}</td>
-                                    <td className="px-6 py-4 text-right font-mono text-slate-600">${log.cost.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-slate-600">
+                                    <td className="px-6 py-4 text-right font-mono text-[var(--content-muted)]">${log.cost.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-[var(--content-muted)]">
                                       {new Date(log.date).toLocaleDateString('en-US', {
                                         year: 'numeric',
                                         month: 'short',
@@ -1412,13 +1468,13 @@ function App() {
                                         permissions.fleet === 'edit' ? (
                                           <button
                                             onClick={() => handleCloseMaintenance(log._id)}
-                                            className="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1 rounded transition-colors"
+                                            className="text-xs bg-[var(--surface-topbar)] hover:bg-[var(--surface-card)] text-[var(--content-primary)] font-semibold px-3 py-1 rounded transition-colors"
                                           >
                                             Close Log
                                           </button>
                                         ) : null
                                       ) : (
-                                        <span className="text-xs text-slate-400 font-medium italic">Completed</span>
+                                        <span className="text-xs text-[var(--content-muted)] font-medium italic">Completed</span>
                                       )}
                                     </td>
                                   </tr>
@@ -1427,7 +1483,7 @@ function App() {
                               if (count === 0) {
                                 return (
                                   <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">No matching service records found.</td>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-[var(--content-muted)]">No matching service records found.</td>
                                   </tr>
                                 );
                               }
@@ -1447,7 +1503,7 @@ function App() {
             )}
 
             {activeTab === 'settings' && (
-              <Settings currentUser={currentUser} onBack={() => setActiveTab('dashboard')} />
+              <Settings currentUser={currentUser} onBack={() => setActiveTab('dashboard')} theme={theme} toggleTheme={toggleTheme} />
             )}
 
             {activeTab === 'trips' && (
@@ -1465,7 +1521,7 @@ function App() {
           </div>
 
           {/* MODULE FOOTERS - MUST BE EXACT FOOTERS */}
-          <footer className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-400 text-center font-medium italic">
+          <footer className="mt-8 pt-4 border-t border-[var(--divider-subtle)] text-xs text-[var(--content-muted)] text-center font-medium italic">
             {activeTab === 'vehicles' ? (
               <span>Rule: Registration no. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher</span>
             ) : activeTab === 'drivers' ? (
@@ -1487,27 +1543,27 @@ function App() {
 
       {/* --- VEHICLE MODAL FORM --- */}
       {showVehicleModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transform transition-all">
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 bg-[var(--surface-topbar)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)] transform transition-all">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center">
               <h3 className="text-lg font-bold">{editingItem ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
               <button 
                 onClick={() => setShowVehicleModal(false)}
-                className="text-slate-400 hover:text-white transition-colors text-xl font-bold"
+                className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors text-xl font-bold"
               >&times;</button>
             </div>
             
             <form onSubmit={handleVehicleSubmit} className="p-6 space-y-4">
               {/* Reg No */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Registration Number</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Registration Number</label>
                 <input
                   type="text"
                   name="registrationNumber"
                   value={vehicleForm.registrationNumber}
                   onChange={handleVehicleChange}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                    formErrors.registrationNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                    formErrors.registrationNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                   }`}
                   placeholder="e.g. MH12AB1234"
                 />
@@ -1518,14 +1574,14 @@ function App() {
 
               {/* Name / Model */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Name/Model</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Name/Model</label>
                 <input
                   type="text"
                   name="name"
                   value={vehicleForm.name}
                   onChange={handleVehicleChange}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                    formErrors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                    formErrors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                   }`}
                   placeholder="e.g. Tata Ace, Mahindra Bolero"
                 />
@@ -1537,12 +1593,12 @@ function App() {
               {/* Grid 2x2 for Type and Capacity */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle Type</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Vehicle Type</label>
                   <select
                     name="type"
                     value={vehicleForm.type}
                     onChange={handleVehicleChange}
-                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   >
                     <option value="Van">Van</option>
                     <option value="Truck">Truck</option>
@@ -1551,14 +1607,14 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Load Capacity (kg)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Load Capacity (kg)</label>
                   <input
                     type="number"
                     name="maxLoadCapacity"
                     value={vehicleForm.maxLoadCapacity}
                     onChange={handleVehicleChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.maxLoadCapacity ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.maxLoadCapacity ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                     placeholder="e.g. 1500"
                   />
@@ -1571,14 +1627,14 @@ function App() {
               {/* Odometer and Acq Cost */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Odometer (km)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Odometer (km)</label>
                   <input
                     type="number"
                     name="odometer"
                     value={vehicleForm.odometer}
                     onChange={handleVehicleChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.odometer ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.odometer ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                     placeholder="0"
                   />
@@ -1588,14 +1644,14 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Acquisition Cost</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Acquisition Cost</label>
                   <input
                     type="number"
                     name="acquisitionCost"
                     value={vehicleForm.acquisitionCost}
                     onChange={handleVehicleChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.acquisitionCost ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.acquisitionCost ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                     placeholder="e.g. 25000"
                   />
@@ -1607,13 +1663,13 @@ function App() {
 
               {/* Status form rules: Manual form should only allow toggling between Available and Retired */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Status</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Status</label>
                 <select
                   name="status"
                   value={vehicleForm.status}
                   onChange={handleVehicleChange}
                   disabled={vehicleForm.status === 'On Trip' || vehicleForm.status === 'In Shop'}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-[var(--surface-base)] disabled:text-[var(--content-muted)]"
                 >
                   <option value="Available">Available</option>
                   <option value="Retired">Retired</option>
@@ -1622,25 +1678,25 @@ function App() {
                   {vehicleForm.status === 'In Shop' && <option value="In Shop">In Shop (System Controlled)</option>}
                 </select>
                 {(vehicleForm.status === 'On Trip' || vehicleForm.status === 'In Shop') && (
-                  <p className="text-slate-400 text-[10px] mt-1 italic">
+                  <p className="text-[var(--content-muted)] text-[10px] mt-1 italic">
                     Status controlled by system workflows. Cannot change manually while active.
                   </p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--divider-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowVehicleModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 border border-[var(--divider-subtle)] rounded-lg text-sm font-semibold text-[var(--content-muted)] hover:bg-[var(--surface-panel)] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!isVehicleFormValid()}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-[var(--content-muted)] disabled:shadow-none transition-all"
                 >
                   {editingItem ? 'Save Changes' : 'Create Vehicle'}
                 </button>
@@ -1652,27 +1708,27 @@ function App() {
 
       {/* --- DRIVER MODAL FORM --- */}
       {showDriverModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transform transition-all">
-            <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 bg-[var(--surface-topbar)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)] transform transition-all">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center">
               <h3 className="text-lg font-bold">{editingItem ? 'Edit Driver Profile' : 'Add Driver'}</h3>
               <button 
                 onClick={() => setShowDriverModal(false)}
-                className="text-slate-400 hover:text-white transition-colors text-xl font-bold"
+                className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors text-xl font-bold"
               >&times;</button>
             </div>
             
             <form onSubmit={handleDriverSubmit} className="p-6 space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Driver Name</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Driver Name</label>
                 <input
                   type="text"
                   name="name"
                   value={driverForm.name}
                   onChange={handleDriverChange}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                    formErrors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                    formErrors.name ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                   }`}
                   placeholder="e.g. John Doe"
                 />
@@ -1683,14 +1739,14 @@ function App() {
 
               {/* License Number */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">License Number</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">License Number</label>
                 <input
                   type="text"
                   name="licenseNumber"
                   value={driverForm.licenseNumber}
                   onChange={handleDriverChange}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                    formErrors.licenseNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                    formErrors.licenseNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                   }`}
                   placeholder="e.g. DL1420110012345"
                 />
@@ -1702,12 +1758,12 @@ function App() {
               {/* Expiry and Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">License Category</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">License Category</label>
                   <select
                     name="licenseCategory"
                     value={driverForm.licenseCategory}
                     onChange={handleDriverChange}
-                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   >
                     <option value="LMV">LMV</option>
                     <option value="HMV">HMV</option>
@@ -1717,14 +1773,14 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">License Expiry</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">License Expiry</label>
                   <input
                     type="date"
                     name="licenseExpiry"
                     value={driverForm.licenseExpiry}
                     onChange={handleDriverChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.licenseExpiry ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.licenseExpiry ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                   />
                   {formErrors.licenseExpiry && (
@@ -1736,14 +1792,14 @@ function App() {
               {/* Contact & Safety Score */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Contact (10-digit)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Contact (10-digit)</label>
                   <input
                     type="text"
                     name="contact"
                     value={driverForm.contact}
                     onChange={handleDriverChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.contact ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.contact ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                     placeholder="9876543210"
                   />
@@ -1753,14 +1809,14 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Safety Score (0-100)</label>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Safety Score (0-100)</label>
                   <input
                     type="number"
                     name="safetyScore"
                     value={driverForm.safetyScore}
                     onChange={handleDriverChange}
                     className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
-                      formErrors.safetyScore ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:ring-indigo-500/20'
+                      formErrors.safetyScore ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
                     }`}
                     placeholder="100"
                   />
@@ -1772,13 +1828,13 @@ function App() {
 
               {/* Status form rules: Manual form cannot set status to "On Trip" */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Status</label>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Status</label>
                 <select
                   name="status"
                   value={driverForm.status}
                   onChange={handleDriverChange}
                   disabled={driverForm.status === 'On Trip'}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-[var(--surface-base)] disabled:text-[var(--content-muted)]"
                 >
                   <option value="Available">Available</option>
                   <option value="Off Duty">Off Duty</option>
@@ -1787,30 +1843,155 @@ function App() {
                   {driverForm.status === 'On Trip' && <option value="On Trip">On Trip (System Controlled)</option>}
                 </select>
                 {driverForm.status === 'On Trip' && (
-                  <p className="text-slate-400 text-[10px] mt-1 italic">
+                  <p className="text-[var(--content-muted)] text-[10px] mt-1 italic">
                     Status controlled by system workflows. Cannot change manually while active.
                   </p>
                 )}
               </div>
 
+              {/* Emergency & Safety Info */}
+              <div className="pt-4 border-t border-[var(--divider-subtle)]">
+                <h4 className="text-sm font-bold text-[var(--content-primary)] mb-3 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-red-500" />
+                  Emergency & Safety Info
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Blood Group</label>
+                    <select
+                      name="bloodGroup"
+                      value={driverForm.bloodGroup}
+                      onChange={handleDriverChange}
+                      className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    >
+                      <option value="Unknown">Unknown</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Emergency Contact Name</label>
+                      <input
+                        type="text"
+                        name="emergencyContactName"
+                        value={driverForm.emergencyContactName}
+                        onChange={handleDriverChange}
+                        className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                          formErrors.emergencyContactName ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
+                        }`}
+                        placeholder="Name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Emergency Number</label>
+                      <input
+                        type="text"
+                        name="emergencyContactNumber"
+                        value={driverForm.emergencyContactNumber}
+                        onChange={handleDriverChange}
+                        className={`w-full p-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                          formErrors.emergencyContactNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-[var(--divider-subtle)] focus:ring-indigo-500/20'
+                        }`}
+                        placeholder="10-digit number"
+                      />
+                    </div>
+                  </div>
+                  {(formErrors.emergencyContactName || formErrors.emergencyContactNumber) && (
+                    <p className="text-red-500 text-xs mt-1">Both emergency contact name and number must be provided together, and number must be 10 digits.</p>
+                  )}
+                  {formErrors[''] && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors['']}</p>
+                  )}
+                </div>
+              </div>
+
               {/* Action Buttons */}
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--divider-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowDriverModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 border border-[var(--divider-subtle)] rounded-lg text-sm font-semibold text-[var(--content-muted)] hover:bg-[var(--surface-panel)] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!isDriverFormValid()}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] rounded-lg text-sm font-semibold shadow-md disabled:bg-slate-200 disabled:text-[var(--content-muted)] disabled:shadow-none transition-all"
                 >
                   {editingItem ? 'Save Changes' : 'Create Profile'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- DRIVER DETAILS MODAL --- */}
+      {showDriverDetailsModal && selectedDriverDetails && (
+        <div className="fixed inset-0 z-50 bg-[var(--surface-topbar)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)]">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center">
+              <h3 className="text-lg font-bold">Driver Details</h3>
+              <button 
+                onClick={() => { setShowDriverDetailsModal(false); setSelectedDriverDetails(null); }}
+                className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors text-xl font-bold"
+              >&times;</button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h4 className="text-lg font-bold text-[var(--content-primary)]">{selectedDriverDetails.name}</h4>
+                <p className="text-sm text-[var(--content-muted)]">{selectedDriverDetails.licenseNumber} • {selectedDriverDetails.licenseCategory}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase">Contact</label>
+                  <p className="text-sm font-medium text-[var(--content-primary)]">{selectedDriverDetails.contact}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase">Status</label>
+                  <p className="text-sm font-medium text-[var(--content-primary)]">{selectedDriverDetails.status}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[var(--divider-subtle)]">
+                <h4 className="text-sm font-bold text-[var(--content-primary)] mb-3 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-red-500" />
+                  Emergency & Safety Info
+                </h4>
+                
+                <div className="bg-red-50/50 p-4 rounded-lg border border-red-100 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-red-800 uppercase">Blood Group</label>
+                    <p className="text-sm font-bold text-red-900">{selectedDriverDetails.bloodGroup || 'Unknown'}</p>
+                  </div>
+                  
+                  {selectedDriverDetails.emergencyContactName ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-red-800 uppercase">Emergency Contact</label>
+                        <p className="text-sm font-bold text-red-900">{selectedDriverDetails.emergencyContactName}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-red-800 uppercase">Emergency Phone</label>
+                        <p className="text-sm font-bold text-red-900">{selectedDriverDetails.emergencyContactNumber}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm italic text-red-700/70">No emergency contact provided.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

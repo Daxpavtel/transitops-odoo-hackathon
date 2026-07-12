@@ -12,6 +12,9 @@ router.get('/', settingsController.getSettings);
 // RBAC Matrix (Any authenticated user can read so frontend knows what to render)
 router.get('/rbac', settingsController.getRBACMatrix);
 
+// Theme toggle
+router.put('/theme', settingsController.updateTheme);
+
 // Only FleetManager can update settings or RBAC.
 // Use 'admin' string to bypass middleware standard check, 
 // wait, the new checkPermission logic will handle FleetManager explicitly.

@@ -21,7 +21,7 @@ const TRIP_BADGE = {
   Dispatched: 'bg-blue-50 text-blue-700 border-blue-200',
   Completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Cancelled: 'bg-red-50 text-red-700 border-red-200',
-  Draft: 'bg-slate-100 text-slate-600 border-slate-200'
+  Draft: 'bg-[var(--surface-base)] text-[var(--content-muted)] border-[var(--divider-subtle)]'
 };
 
 // Animated counter hook
@@ -63,12 +63,12 @@ function KpiCard({ label, value, suffix = '', icon: Icon, accentColor, isPercent
     : Math.round(animatedVal).toLocaleString('en-IN');
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
+    <div className={`bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] p-5 relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl`} style={{ backgroundColor: accentColor }} />
       <div className="flex items-start justify-between">
         <div className="pl-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{label}</div>
-          <div className="text-2xl font-extrabold text-slate-800 tabular-nums tracking-tight">
+          <div className="text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider mb-1.5">{label}</div>
+          <div className="text-2xl font-extrabold text-[var(--content-primary)] tabular-nums tracking-tight">
             {displayVal}{suffix}
           </div>
         </div>
@@ -83,7 +83,7 @@ function KpiCard({ label, value, suffix = '', icon: Icon, accentColor, isPercent
 // Skeleton loader
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 animate-pulse">
+    <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] p-5 animate-pulse">
       <div className="h-3 bg-slate-200 rounded w-24 mb-3" />
       <div className="h-7 bg-slate-200 rounded w-16" />
     </div>
@@ -92,14 +92,14 @@ function SkeletonCard() {
 
 function SkeletonTable() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 animate-pulse">
+    <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] p-6 animate-pulse">
       <div className="h-4 bg-slate-200 rounded w-32 mb-6" />
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex gap-4 mb-4">
-          <div className="h-3 bg-slate-100 rounded flex-1" />
-          <div className="h-3 bg-slate-100 rounded w-20" />
-          <div className="h-3 bg-slate-100 rounded w-16" />
-          <div className="h-3 bg-slate-100 rounded w-14" />
+          <div className="h-3 bg-[var(--surface-base)] rounded flex-1" />
+          <div className="h-3 bg-[var(--surface-base)] rounded w-20" />
+          <div className="h-3 bg-[var(--surface-base)] rounded w-16" />
+          <div className="h-3 bg-[var(--surface-base)] rounded w-14" />
         </div>
       ))}
     </div>
@@ -185,8 +185,8 @@ export default function Dashboard({ currentUser }) {
   return (
     <div className="space-y-6">
       {/* Filter Bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-slate-500">
+      <div className="bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] p-4 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 text-[var(--content-muted)]">
           <Filter className="w-4 h-4" />
           <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
         </div>
@@ -194,7 +194,7 @@ export default function Dashboard({ currentUser }) {
         <select
           value={vehicleType}
           onChange={(e) => setVehicleType(e.target.value)}
-          className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
+          className="p-2 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
         >
           <option value="All">All Vehicle Types</option>
           {(data?.filters?.types || []).map(t => (
@@ -205,7 +205,7 @@ export default function Dashboard({ currentUser }) {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
+          className="p-2 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
         >
           <option value="All">All Statuses</option>
           {(data?.filters?.statuses || []).map(s => (
@@ -219,7 +219,7 @@ export default function Dashboard({ currentUser }) {
           </button>
         )}
 
-        <button onClick={fetchDashboard} className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">
+        <button onClick={fetchDashboard} className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-[var(--content-muted)] hover:text-[var(--content-muted)] transition-colors">
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </button>
       </div>
@@ -258,54 +258,54 @@ export default function Dashboard({ currentUser }) {
         {loading && !data ? (
           <div className="lg:col-span-2"><SkeletonTable /></div>
         ) : (
-          <div className={`lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className={`lg:col-span-2 bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <div className="p-6 border-b border-[var(--divider-subtle)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
                   <Activity className="w-4 h-4 text-indigo-600" />
                 </div>
-                <h3 className="text-base font-bold text-slate-800">Recent Trips</h3>
+                <h3 className="text-base font-bold text-[var(--content-primary)]">Recent Trips</h3>
               </div>
-              <span className="text-xs text-slate-400 font-semibold">{data?.recentTrips?.length || 0} entries</span>
+              <span className="text-xs text-[var(--content-muted)] font-semibold">{data?.recentTrips?.length || 0} entries</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-slate-50/80">
-                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trip</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Route</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vehicle</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Driver</th>
-                    <th className="px-6 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">ETA</th>
+                  <tr className="bg-[var(--surface-panel)]/80">
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Trip</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Route</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Vehicle</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Driver</th>
+                    <th className="px-6 py-3 text-center text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-[11px] font-bold text-[var(--content-muted)] uppercase tracking-wider">ETA</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {(!data?.recentTrips || data.recentTrips.length === 0) ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-12 text-center text-slate-400 text-sm">
+                      <td colSpan="6" className="px-6 py-12 text-center text-[var(--content-muted)] text-sm">
                         {hasFilters ? 'No trips match the current filters.' : 'No trip data yet. Create a trip to get started.'}
                       </td>
                     </tr>
                   ) : data.recentTrips.map(trip => (
-                    <tr key={trip._id} className="hover:bg-slate-50/50 transition-colors group cursor-default">
-                      <td className="px-6 py-3.5 text-sm font-bold text-slate-800">{trip.tripCode}</td>
-                      <td className="px-6 py-3.5 text-sm text-slate-600">
+                    <tr key={trip._id} className="hover:bg-[var(--surface-panel)]/50 transition-colors group cursor-default">
+                      <td className="px-6 py-3.5 text-sm font-bold text-[var(--content-primary)]">{trip.tripCode}</td>
+                      <td className="px-6 py-3.5 text-sm text-[var(--content-muted)]">
                         {trip.source && trip.destination ? (
                           <span className="flex items-center gap-1.5">
                             {trip.source} <ArrowRight className="w-3 h-3 text-slate-300" /> {trip.destination}
                           </span>
                         ) : '\u2014'}
                       </td>
-                      <td className="px-6 py-3.5 text-sm text-slate-600">{trip.vehicle || '\u2014'}</td>
-                      <td className="px-6 py-3.5 text-sm text-slate-600">{trip.driver || '\u2014'}</td>
+                      <td className="px-6 py-3.5 text-sm text-[var(--content-muted)]">{trip.vehicle || '\u2014'}</td>
+                      <td className="px-6 py-3.5 text-sm text-[var(--content-muted)]">{trip.driver || '\u2014'}</td>
                       <td className="px-6 py-3.5 text-center">
                         <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${TRIP_BADGE[trip.status] || TRIP_BADGE.Draft}`}>
                           {trip.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-sm text-right font-medium text-slate-500">{trip.eta}</td>
+                      <td className="px-6 py-3.5 text-sm text-right font-medium text-[var(--content-muted)]">{trip.eta}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -318,18 +318,18 @@ export default function Dashboard({ currentUser }) {
         {loading && !data ? (
           <div className="lg:col-span-1"><SkeletonTable /></div>
         ) : (
-          <div className={`lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
-            <div className="p-6 border-b border-slate-100">
+          <div className={`lg:col-span-1 bg-[var(--surface-card)] rounded-xl shadow-sm border border-[var(--divider-subtle)] transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <div className="p-6 border-b border-[var(--divider-subtle)]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
                   <Truck className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h3 className="text-base font-bold text-slate-800">Vehicle Status</h3>
+                <h3 className="text-base font-bold text-[var(--content-primary)]">Vehicle Status</h3>
               </div>
             </div>
 
             {totalVehicles === 0 ? (
-              <div className="p-6 text-center text-slate-400 text-sm py-16">No vehicle data yet.</div>
+              <div className="p-6 text-center text-[var(--content-muted)] text-sm py-16">No vehicle data yet.</div>
             ) : (
               <div className="p-4">
                 {/* Horizontal bars (custom, not Recharts for better control) */}
@@ -340,10 +340,10 @@ export default function Dashboard({ currentUser }) {
                     return (
                       <div key={item.name} className="group">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-semibold text-slate-600">{item.name}</span>
-                          <span className="text-xs font-bold text-slate-800 tabular-nums">{item.value}</span>
+                          <span className="text-xs font-semibold text-[var(--content-muted)]">{item.name}</span>
+                          <span className="text-xs font-bold text-[var(--content-primary)] tabular-nums">{item.value}</span>
                         </div>
-                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-3 bg-[var(--surface-base)] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-700 ease-out"
                             style={{
@@ -352,16 +352,16 @@ export default function Dashboard({ currentUser }) {
                             }}
                           />
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5 tabular-nums">{pct.toFixed(1)}%</div>
+                        <div className="text-[10px] text-[var(--content-muted)] mt-0.5 tabular-nums">{pct.toFixed(1)}%</div>
                       </div>
                     );
                   })}
                 </div>
 
                 {/* Total */}
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Fleet</span>
-                  <span className="text-lg font-extrabold text-slate-800 tabular-nums">{totalVehicles}</span>
+                <div className="mt-6 pt-4 border-t border-[var(--divider-subtle)] flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider">Total Fleet</span>
+                  <span className="text-lg font-extrabold text-[var(--content-primary)] tabular-nums">{totalVehicles}</span>
                 </div>
               </div>
             )}

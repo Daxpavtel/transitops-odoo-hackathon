@@ -225,18 +225,18 @@ export default function TripDispatcher({ currentUser, readOnly }) {
     const stepIdx = statusOrder.indexOf(stepName);
 
     if (currentStatus === 'Cancelled') {
-      if (stepName === 'Cancelled') return 'bg-red-500 text-white border-red-500 scale-110 shadow-lg';
-      if (stepIdx < 1) return 'bg-emerald-500 text-white border-emerald-500'; // Draft completed
-      return 'border-slate-200 text-slate-300';
+      if (stepName === 'Cancelled') return 'bg-red-500 text-[var(--content-primary)] border-red-500 scale-110 shadow-lg';
+      if (stepIdx < 1) return 'bg-emerald-500 text-[var(--content-primary)] border-emerald-500'; // Draft completed
+      return 'border-[var(--divider-subtle)] text-slate-300';
     }
 
     if (stepIdx === currentIdx) {
-      return 'bg-indigo-600 text-white border-indigo-600 scale-110 shadow-lg';
+      return 'bg-indigo-600 text-[var(--content-primary)] border-indigo-600 scale-110 shadow-lg';
     }
     if (stepIdx < currentIdx) {
-      return 'bg-emerald-500 text-white border-emerald-500';
+      return 'bg-emerald-500 text-[var(--content-primary)] border-emerald-500';
     }
-    return 'border-slate-200 text-slate-300 bg-white';
+    return 'border-[var(--divider-subtle)] text-slate-300 bg-[var(--surface-card)]';
   };
 
   // Dispatch button disable logic
@@ -256,30 +256,30 @@ export default function TripDispatcher({ currentUser, readOnly }) {
       <div className="lg:col-span-5 space-y-6">
         
         {/* 1.1 Stepper */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)]">
           <div className="flex items-center justify-between relative px-2">
             {/* Connecting line */}
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-[var(--surface-base)] -translate-y-1/2 z-0" />
             
             {['Draft', 'Dispatched', 'Completed', 'Cancelled'].map((step, idx) => (
               <div key={step} className="flex flex-col items-center z-10 relative">
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${getStepClass(step)}`}>
                   {idx + 1}
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-2">{step}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--content-muted)] mt-2">{step}</span>
               </div>
             ))}
           </div>
           {selectedTripForStepper && (
-            <div className="mt-4 text-center text-xs font-semibold text-slate-500">
-              Viewing status of Trip <span className="text-slate-800 font-bold">{selectedTripForStepper.tripCode}</span>
+            <div className="mt-4 text-center text-xs font-semibold text-[var(--content-muted)]">
+              Viewing status of Trip <span className="text-[var(--content-primary)] font-bold">{selectedTripForStepper.tripCode}</span>
             </div>
           )}
         </div>
 
         {/* 1.2 Form */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-base font-bold text-slate-800 mb-4">Create Trip</h3>
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)]">
+          <h3 className="text-base font-bold text-[var(--content-primary)] mb-4">Create Trip</h3>
           {errorMsg && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 border-l-4 border-red-500 rounded text-xs">
               {errorMsg}
@@ -289,38 +289,38 @@ export default function TripDispatcher({ currentUser, readOnly }) {
         {!readOnly && (
           <form onSubmit={handleCreateDraft} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Source</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Source</label>
               <input 
                 type="text"
                 name="source"
                 value={formData.source}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 placeholder="Origin City"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Destination</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Destination</label>
               <input 
                 type="text"
                 name="destination"
                 value={formData.destination}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 placeholder="Destination City"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Vehicle (Available Only)</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Vehicle (Available Only)</label>
               <select
                 name="vehicle"
                 value={formData.vehicle}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 required
               >
                 <option value="">Select Vehicle</option>
@@ -333,12 +333,12 @@ export default function TripDispatcher({ currentUser, readOnly }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Driver (Available Only)</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Driver (Available Only)</label>
               <select
                 name="driver"
                 value={formData.driver}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 required
               >
                 <option value="">Select Driver</option>
@@ -351,13 +351,13 @@ export default function TripDispatcher({ currentUser, readOnly }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cargo Weight (kg)</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Cargo Weight (kg)</label>
               <input 
                 type="number"
                 name="cargoWeight"
                 value={formData.cargoWeight}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 placeholder="Weight in kg"
                 required
                 min="1"
@@ -365,13 +365,13 @@ export default function TripDispatcher({ currentUser, readOnly }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Planned Distance (km)</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">Planned Distance (km)</label>
               <input 
                 type="number"
                 name="plannedDistance"
                 value={formData.plannedDistance}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 placeholder="Distance in km"
                 required
                 min="1"
@@ -394,8 +394,8 @@ export default function TripDispatcher({ currentUser, readOnly }) {
                 disabled={isDispatchDisabled}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all ${
                   isDispatchDisabled 
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10'
+                    ? 'bg-slate-200 text-[var(--content-muted)] cursor-not-allowed shadow-none' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-[var(--content-primary)] shadow-indigo-600/10'
                 }`}
               >
                 {isDispatchDisabled ? 'Dispatch (Disabled)' : 'Dispatch'}
@@ -404,7 +404,7 @@ export default function TripDispatcher({ currentUser, readOnly }) {
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all"
+                className="px-4 py-2.5 border border-[var(--divider-subtle)] text-[var(--content-muted)] rounded-lg text-sm font-semibold hover:bg-[var(--surface-panel)] transition-all"
               >
                 Cancel
               </button>
@@ -416,12 +416,12 @@ export default function TripDispatcher({ currentUser, readOnly }) {
 
       {/* Right Column: Live Board */}
       <div className="lg:col-span-7 flex flex-col justify-between">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex-1 flex flex-col">
-          <h3 className="text-base font-bold text-slate-800 mb-4">Live Board</h3>
+        <div className="bg-[var(--surface-card)] p-6 rounded-xl shadow-sm border border-[var(--divider-subtle)] flex-1 flex flex-col">
+          <h3 className="text-base font-bold text-[var(--content-primary)] mb-4">Live Board</h3>
 
           <div className="space-y-4 flex-1 overflow-auto max-h-[600px]">
             {trips.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">No active dispatch trips on system.</div>
+              <div className="text-center py-12 text-[var(--content-muted)] text-sm">No active dispatch trips on system.</div>
             ) : (
               [...trips]
                 .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -432,15 +432,15 @@ export default function TripDispatcher({ currentUser, readOnly }) {
                     className={`p-4 rounded-xl border transition-all cursor-pointer ${
                       selectedTripForStepper?._id === trip._id 
                         ? 'border-indigo-500 bg-indigo-50/20 shadow-md' 
-                        : 'border-slate-100 hover:border-slate-200 bg-slate-50/30'
+                        : 'border-[var(--divider-subtle)] hover:border-[var(--divider-subtle)] bg-[var(--surface-panel)]/30'
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <span className="text-sm font-bold text-slate-800">{trip.tripCode}</span>
-                        <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-slate-500">
+                        <span className="text-sm font-bold text-[var(--content-primary)]">{trip.tripCode}</span>
+                        <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-[var(--content-muted)]">
                           <span>{trip.source}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                          <ArrowRight className="w-3.5 h-3.5 text-[var(--content-muted)]" />
                           <span>{trip.destination}</span>
                         </div>
                       </div>
@@ -448,20 +448,20 @@ export default function TripDispatcher({ currentUser, readOnly }) {
                       <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                         trip.status === 'Dispatched' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
                         trip.status === 'Cancelled' ? 'bg-red-50 text-red-700 border border-red-100' :
-                        'bg-slate-100 text-slate-600 border border-slate-200'
+                        'bg-[var(--surface-base)] text-[var(--content-muted)] border border-[var(--divider-subtle)]'
                       }`}>
                         {trip.status}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100">
-                      <div className="flex gap-4 text-[11px] text-slate-400 font-semibold">
+                    <div className="flex justify-between items-center mt-4 pt-3 border-t border-[var(--divider-subtle)]">
+                      <div className="flex gap-4 text-[11px] text-[var(--content-muted)] font-semibold">
                         <div className="flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5 text-slate-400" />
+                          <Truck className="w-3.5 h-3.5 text-[var(--content-muted)]" />
                           <span>{trip.vehicle?.registrationNumber || 'Unassigned'}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                          <UserIcon className="w-3.5 h-3.5 text-[var(--content-muted)]" />
                           <span>{trip.driver?.name || 'Unassigned'}</span>
                         </div>
                       </div>
@@ -480,7 +480,7 @@ export default function TripDispatcher({ currentUser, readOnly }) {
                         {trip.status === 'Draft' && !readOnly && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDispatch(trip._id); }}
-                            className="bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors"
+                            className="bg-indigo-600 text-[var(--content-primary)] px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors"
                           >
                             Dispatch Now
                           </button>
@@ -499,7 +499,7 @@ export default function TripDispatcher({ currentUser, readOnly }) {
         </div>
 
         {/* 1.6 Footer Note */}
-        <div className="mt-4 text-left text-xs font-semibold text-slate-400 italic">
+        <div className="mt-4 text-left text-xs font-semibold text-[var(--content-muted)] italic">
           On Complete: odometer -&gt; fuel log -&gt; expenses -&gt; Vehicle & Driver Available
         </div>
       </div>

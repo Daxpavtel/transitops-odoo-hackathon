@@ -54,7 +54,7 @@ exports.getDriverById = async (req, res, next) => {
 // CREATE driver
 exports.createDriver = async (req, res, next) => {
   try {
-    const { name, licenseNumber, licenseCategory, licenseExpiry, contact, safetyScore, status } = req.body;
+    const { name, licenseNumber, licenseCategory, licenseExpiry, contact, safetyScore, status, bloodGroup, emergencyContactName, emergencyContactNumber } = req.body;
 
     // Check unique license number
     const trimmedLicense = licenseNumber.trim();
@@ -84,7 +84,10 @@ exports.createDriver = async (req, res, next) => {
       licenseExpiry: expiryDate,
       contact,
       safetyScore: safetyScore !== undefined ? safetyScore : 100,
-      status: finalStatus
+      status: finalStatus,
+      bloodGroup: bloodGroup || 'Unknown',
+      emergencyContactName,
+      emergencyContactNumber
     });
 
     await driver.save();
@@ -106,7 +109,7 @@ exports.updateDriver = async (req, res, next) => {
       });
     }
 
-    const { name, licenseNumber, licenseCategory, licenseExpiry, contact, safetyScore, status } = req.body;
+    const { name, licenseNumber, licenseCategory, licenseExpiry, contact, safetyScore, status, bloodGroup, emergencyContactName, emergencyContactNumber } = req.body;
 
     // Unique check if license number changes
     if (licenseNumber) {
@@ -140,6 +143,16 @@ exports.updateDriver = async (req, res, next) => {
         driver.status = status;
       }
       // If it is 'On Trip', we ignore it (leave current status as is)
+    }
+
+    if (bloodGroup !== undefined) driver.bloodGroup = bloodGroup;
+    if (emergencyContactName !== undefined) driver.emergencyContactName = emergencyContactName;
+    if (emergencyContactNumber !== undefined) driver.emergencyContactNumber = emergencyContactNumber;
+
+    // Handle clearing the contact if empty string passed in update
+    if (emergencyContactName === '' && emergencyContactNumber === '') {
+      driver.emergencyContactName = undefined;
+      driver.emergencyContactNumber = undefined;
     }
 
     await driver.save();

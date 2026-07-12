@@ -54,16 +54,16 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-        <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--surface-panel)] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-[var(--surface-card)] rounded-2xl shadow-xl border border-[var(--divider-subtle)] overflow-hidden">
+        <div className="bg-[var(--surface-topbar)] p-8 text-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent"></div>
           <div className="relative z-10">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/30 mb-6">
-              <Truck className="w-8 h-8 text-white" />
+              <Truck className="w-8 h-8 text-[var(--content-primary)]" />
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">TransitOps</h1>
-            <p className="text-slate-400 font-medium">Sign in to your account</p>
+            <h1 className="text-3xl font-bold text-[var(--content-primary)] tracking-tight mb-2">TransitOps</h1>
+            <p className="text-[var(--content-muted)] font-medium">Sign in to your account</p>
           </div>
         </div>
 
@@ -77,14 +77,14 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Email Address</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-2">Email Address</label>
               <div className="relative">
-                <Mail className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-5 h-5 text-[var(--content-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="email" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className={`w-full bg-slate-50 border ${errors.email ? 'border-red-300 focus:ring-red-500' : 'border-slate-200 focus:ring-indigo-500'} rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all`}
+                  className={`w-full bg-[var(--surface-panel)] border ${errors.email ? 'border-red-300 focus:ring-red-500' : 'border-[var(--divider-subtle)] focus:ring-indigo-500'} rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all`}
                   placeholder="Enter your email"
                   required
                 />
@@ -93,14 +93,14 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-2">Password</label>
               <div className="relative">
-                <Lock className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-5 h-5 text-[var(--content-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="password" 
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className={`w-full bg-slate-50 border ${errors.password ? 'border-red-300 focus:ring-red-500' : 'border-slate-200 focus:ring-indigo-500'} rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all`}
+                  className={`w-full bg-[var(--surface-panel)] border ${errors.password ? 'border-red-300 focus:ring-red-500' : 'border-[var(--divider-subtle)] focus:ring-indigo-500'} rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all`}
                   placeholder="Enter your password"
                   required
                 />
@@ -111,7 +111,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 mt-4"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-[var(--content-primary)] font-semibold py-3 px-4 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 mt-4"
             >
               <span>{loading ? 'Signing in...' : 'Sign In'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
@@ -119,7 +119,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-slate-500 font-medium">
+            <p className="text-sm text-[var(--content-muted)] font-medium">
               Don't have an account?{' '}
               <button onClick={onSwitchToRegister} className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors">
                 Create one

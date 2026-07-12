@@ -22,13 +22,14 @@ import {
 } from 'lucide-react';
 import ReportsAnalytics from './pages/ReportsAnalytics';
 import TripDispatcher from './pages/TripDispatcher';
+import Dashboard from './pages/Dashboard';
 import FuelExpenses from './pages/FuelExpenses';
 import Settings from './pages/Settings';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('vehicles'); // 'vehicles' | 'drivers'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'vehicles' | 'drivers'
   const [currentUser, setCurrentUser] = useState({
     name: 'Fleet Manager Demo',
     role: 'FleetManager' // 'FleetManager' | 'Dispatcher' | 'SafetyOfficer' | 'FinancialAnalyst'
@@ -712,6 +713,17 @@ function App() {
           {/* Nav list */}
           <nav className="p-4 space-y-1">
             <button
+              onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'dashboard' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span>Dashboard</span>
+            </button>
+            <button
               onClick={() => { setActiveTab('vehicles'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === 'vehicles' 
@@ -1368,6 +1380,10 @@ function App() {
               <FuelExpenses currentUser={currentUser} />
             )}
 
+            {activeTab === 'dashboard' && (
+              <Dashboard currentUser={currentUser} />
+            )}
+
           </div>
 
           {/* MODULE FOOTERS - MUST BE EXACT FOOTERS */}
@@ -1382,6 +1398,8 @@ function App() {
               <span>On Complete: odometer -&gt; fuel log -&gt; expenses -&gt; Vehicle & Driver Available</span>
             ) : activeTab === 'fuelexpenses' ? (
               <span>Total Operational Cost = Fuel + Maintenance (server-computed, never cached)</span>
+            ) : activeTab === 'dashboard' ? (
+              <span>Dashboard is powered by real-time aggregation across modules</span>
             ) : (
               <span>ROI Formula = (Total Revenue - Total Expense) / Total Expense</span>
             )}

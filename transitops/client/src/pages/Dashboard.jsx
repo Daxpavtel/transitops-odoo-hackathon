@@ -1,170 +1,372 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
+} from 'recharts';
+import {
+  Truck, Users, MapPin, Activity, Clock, Wrench, TrendingUp, AlertTriangle,
+  Filter, X, ArrowRight, RefreshCw
+} from 'lucide-react';
 
-export default function Dashboard() {
-  const [stats, setStats] = useState(null);
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Shared status colors matching all other modules
+const STATUS_COLORS = {
+  Available: '#10b981',
+  'On Trip': '#3b82f6',
+  'In Shop': '#f59e0b',
+  Retired: '#ef4444'
+};
+
+const TRIP_BADGE = {
+  Dispatched: 'bg-blue-50 text-blue-700 border-blue-200',
+  Completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Cancelled: 'bg-red-50 text-red-700 border-red-200',
+  Draft: 'bg-slate-100 text-slate-600 border-slate-200'
+};
+
+// Animated counter hook
+function useAnimatedValue(target, duration = 600) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef(null);
+  const startRef = useRef(null);
+  const fromRef = useRef(0);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get('/api/dashboard/stats');
-        setStats(res.data.data);
-      } catch (error) {
-        console.error("Error fetching dashboard stats", error);
+    fromRef.current = value;
+    startRef.current = null;
+
+    const animate = (timestamp) => {
+      if (!startRef.current) startRef.current = timestamp;
+      const elapsed = timestamp - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out quad
+      const eased = 1 - (1 - progress) * (1 - progress);
+      const current = fromRef.current + (target - fromRef.current) * eased;
+      setValue(current);
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
       }
     };
-    fetchStats();
-  }, []);
 
-  if (!stats) return <div className="p-8">Loading dashboard...</div>;
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
 
-  const { kpis, recentTrips, vehicleStatusDistribution } = stats;
+  return value;
+}
 
-  const STATUS_COLORS = {
-    'Available': '#10B981', // green
-    'On Trip': '#3B82F6',   // blue
-    'In Shop': '#F59E0B',   // orange
-    'Retired': '#EF4444'    // red
-  };
-
-  const TRIP_STATUS_COLORS = {
-    'Completed': 'bg-green-500',
-    'Dispatched': 'bg-blue-500',
-    'Draft': 'bg-gray-500',
-    'Cancelled': 'bg-red-500'
-  };
+// KPI Card with animated number
+function KpiCard({ label, value, suffix = '', icon: Icon, accentColor, isPercentage = false }) {
+  const animatedVal = useAnimatedValue(value);
+  const displayVal = isPercentage
+    ? animatedVal.toFixed(1)
+    : Math.round(animatedVal).toLocaleString('en-IN');
 
   return (
-    <div className="flex h-screen bg-gray-100 text-gray-800">
-      {/* Sidebar Placeholder */}
-      <div className="w-64 bg-gray-900 text-white p-5 flex flex-col">
-        <h1 className="text-2xl font-bold mb-10">TransitOps</h1>
-        <nav className="flex flex-col space-y-4">
-          <span className="font-bold text-blue-400">Dashboard</span>
-          <span>Fleet</span>
-          <span>Drivers</span>
-          <span>Trips</span>
-          <span>Maintenance</span>
-          <span>Fuel & Expenses</span>
-        </nav>
+    <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-5 relative overflow-hidden group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default`}>
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl`} style={{ backgroundColor: accentColor }} />
+      <div className="flex items-start justify-between">
+        <div className="pl-2">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{label}</div>
+          <div className="text-2xl font-extrabold text-slate-800 tabular-nums tracking-tight">
+            {displayVal}{suffix}
+          </div>
+        </div>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: `${accentColor}15` }}>
+          <Icon className="w-4.5 h-4.5" style={{ color: accentColor }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton loader
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 animate-pulse">
+      <div className="h-3 bg-slate-200 rounded w-24 mb-3" />
+      <div className="h-7 bg-slate-200 rounded w-16" />
+    </div>
+  );
+}
+
+function SkeletonTable() {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 animate-pulse">
+      <div className="h-4 bg-slate-200 rounded w-32 mb-6" />
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex gap-4 mb-4">
+          <div className="h-3 bg-slate-100 rounded flex-1" />
+          <div className="h-3 bg-slate-100 rounded w-20" />
+          <div className="h-3 bg-slate-100 rounded w-16" />
+          <div className="h-3 bg-slate-100 rounded w-14" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function Dashboard({ currentUser }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Filters
+  const [vehicleType, setVehicleType] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Debounce timer
+  const debounceRef = useRef(null);
+
+  const getAuthHeaders = async () => {
+    let email = 'fleetmanager@transitops.io';
+    if (currentUser?.role === 'FinancialAnalyst') email = 'finance@transitops.io';
+    else if (currentUser?.role === 'Dispatcher') email = 'dispatcher@transitops.io';
+    else if (currentUser?.role === 'SafetyOfficer') email = 'safety@transitops.io';
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'Password@123' })
+      });
+      const result = await res.json();
+      if (result.success && result.data.token) {
+        return { 'Authorization': `Bearer ${result.data.token}`, 'Content-Type': 'application/json' };
+      }
+    } catch (e) { console.error('Auth error', e); }
+    return { 'Content-Type': 'application/json' };
+  };
+
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      if (vehicleType !== 'All') params.set('vehicleType', vehicleType);
+      if (statusFilter !== 'All') params.set('status', statusFilter);
+
+      const url = `${API_BASE_URL}/dashboard/summary${params.toString() ? '?' + params.toString() : ''}`;
+      const res = await fetch(url, { headers });
+      const result = await res.json();
+
+      if (result.success) {
+        setData(result.data);
+      } else {
+        setError(result.errors?.[0]?.message || 'Failed to load dashboard data.');
+      }
+    } catch (err) {
+      setError('Dashboard connection failed. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  }, [vehicleType, statusFilter, currentUser]);
+
+  useEffect(() => {
+    // Debounce filter changes by 300ms
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchDashboard();
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [fetchDashboard]);
+
+  const hasFilters = vehicleType !== 'All' || statusFilter !== 'All';
+  const clearFilters = () => { setVehicleType('All'); setStatusFilter('All'); };
+
+  // Chart data
+  const chartData = data ? Object.entries(data.vehicleStatusBreakdown).map(([name, value]) => ({
+    name, value
+  })) : [];
+  const totalVehicles = chartData.reduce((sum, d) => sum + d.value, 0);
+
+  const kpis = data?.kpis || {};
+
+  return (
+    <div className="space-y-6">
+      {/* Filter Bar */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 text-slate-500">
+          <Filter className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
+        </div>
+
+        <select
+          value={vehicleType}
+          onChange={(e) => setVehicleType(e.target.value)}
+          className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
+        >
+          <option value="All">All Vehicle Types</option>
+          {(data?.filters?.types || []).map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none min-w-[160px]"
+        >
+          <option value="All">All Statuses</option>
+          {(data?.filters?.statuses || []).map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+
+        {hasFilters && (
+          <button onClick={clearFilters} className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+            <X className="w-3.5 h-3.5" /> Clear filters
+          </button>
+        )}
+
+        <button onClick={fetchDashboard} className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto p-8">
-        
-        {/* Top Filter Bar */}
-        <div className="bg-white p-4 rounded shadow mb-6 flex space-x-4 items-center">
-          <span className="font-bold">Filters:</span>
-          <select className="border p-2 rounded">
-            <option>All Vehicle Types</option>
-            <option>Van</option>
-            <option>Truck</option>
-            <option>Mini</option>
-          </select>
-          <select className="border p-2 rounded">
-            <option>All Statuses</option>
-            <option>Available</option>
-            <option>On Trip</option>
-            <option>In Shop</option>
-          </select>
-          <select className="border p-2 rounded">
-            <option>All Regions</option>
-            <option>North</option>
-            <option>South</option>
-          </select>
+      {/* Error state */}
+      {error && (
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button onClick={fetchDashboard} className="text-sm font-semibold text-red-600 hover:text-red-800 underline">Retry</button>
         </div>
+      )}
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-4 rounded shadow border-t-4 border-blue-500">
-            <div className="text-gray-500 text-sm">Active Vehicles</div>
-            <div className="text-3xl font-bold">{kpis.activeVehicles}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-green-500">
-            <div className="text-gray-500 text-sm">Available Vehicles</div>
-            <div className="text-3xl font-bold">{kpis.availableVehicles}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-orange-500">
-            <div className="text-gray-500 text-sm">Vehicles In Shop</div>
-            <div className="text-3xl font-bold">{kpis.vehiclesInMaintenance}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-purple-500">
-            <div className="text-gray-500 text-sm">Fleet Utilization</div>
-            <div className="text-3xl font-bold">{kpis.fleetUtilization}%</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-blue-400">
-            <div className="text-gray-500 text-sm">Active Trips</div>
-            <div className="text-3xl font-bold">{kpis.activeTrips}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-gray-400">
-            <div className="text-gray-500 text-sm">Pending Trips</div>
-            <div className="text-3xl font-bold">{kpis.pendingTrips}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border-t-4 border-indigo-500">
-            <div className="text-gray-500 text-sm">Drivers On Duty</div>
-            <div className="text-3xl font-bold">{kpis.driversOnDuty}</div>
-          </div>
+      {/* KPI Cards */}
+      {loading && !data ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {[...Array(7)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
+      ) : (
+        <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+          <KpiCard label="Active Vehicles" value={kpis.activeVehicles || 0} icon={Truck} accentColor="#3b82f6" />
+          <KpiCard label="Available" value={kpis.availableVehicles || 0} icon={Truck} accentColor="#10b981" />
+          <KpiCard label="In Maintenance" value={kpis.vehiclesInMaintenance || 0} icon={Wrench} accentColor="#f59e0b" />
+          <KpiCard label="Active Trips" value={kpis.activeTrips || 0} icon={MapPin} accentColor="#6366f1" />
+          <KpiCard label="Pending Trips" value={kpis.pendingTrips || 0} icon={Clock} accentColor="#94a3b8" />
+          <KpiCard label="Drivers On Duty" value={kpis.driversOnDuty || 0} icon={Users} accentColor="#8b5cf6" />
+          <KpiCard label="Fleet Utilization" value={kpis.fleetUtilizationPct || 0} suffix="%" icon={TrendingUp} accentColor="#ec4899" isPercentage />
+        </div>
+      )}
 
-        <div className="flex space-x-6">
-          {/* Recent Trips Table */}
-          <div className="w-2/3 bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold mb-4">Recent Trips</h2>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b text-gray-600">
-                  <th className="p-2">Trip Code</th>
-                  <th className="p-2">Vehicle</th>
-                  <th className="p-2">Driver</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">ETA (Mock)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTrips.map(trip => (
-                  <tr key={trip._id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-bold">{trip.tripCode}</td>
-                    <td className="p-2">{trip.vehicle?.registrationNumber || 'N/A'}</td>
-                    <td className="p-2">{trip.driver?.name || 'N/A'}</td>
-                    <td className="p-2">
-                      <span className={`px-2 py-1 rounded text-white text-xs ${TRIP_STATUS_COLORS[trip.status] || 'bg-gray-400'}`}>
-                        {trip.status}
-                      </span>
-                    </td>
-                    <td className="p-2 text-gray-500">2 hrs 15 mins</td>
-                  </tr>
-                ))}
-                {recentTrips.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="p-4 text-center text-gray-500">No recent trips.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+      {/* Bottom row: Recent Trips + Vehicle Status Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Trips Table */}
+        {loading && !data ? (
+          <div className="lg:col-span-2"><SkeletonTable /></div>
+        ) : (
+          <div className={`lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-base font-bold text-slate-800">Recent Trips</h3>
+              </div>
+              <span className="text-xs text-slate-400 font-semibold">{data?.recentTrips?.length || 0} entries</span>
+            </div>
 
-          {/* Vehicle Status Chart */}
-          <div className="w-1/3 bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold mb-4">Vehicle Status</h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={vehicleStatusDistribution} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={80} />
-                  <Tooltip />
-                  <Bar dataKey="value" name="Count" radius={[0, 4, 4, 0]}>
-                    {vehicleStatusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || '#8884d8'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50/80">
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trip</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Route</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vehicle</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Driver</th>
+                    <th className="px-6 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">ETA</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(!data?.recentTrips || data.recentTrips.length === 0) ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center text-slate-400 text-sm">
+                        {hasFilters ? 'No trips match the current filters.' : 'No trip data yet. Create a trip to get started.'}
+                      </td>
+                    </tr>
+                  ) : data.recentTrips.map(trip => (
+                    <tr key={trip._id} className="hover:bg-slate-50/50 transition-colors group cursor-default">
+                      <td className="px-6 py-3.5 text-sm font-bold text-slate-800">{trip.tripCode}</td>
+                      <td className="px-6 py-3.5 text-sm text-slate-600">
+                        {trip.source && trip.destination ? (
+                          <span className="flex items-center gap-1.5">
+                            {trip.source} <ArrowRight className="w-3 h-3 text-slate-300" /> {trip.destination}
+                          </span>
+                        ) : '\u2014'}
+                      </td>
+                      <td className="px-6 py-3.5 text-sm text-slate-600">{trip.vehicle || '\u2014'}</td>
+                      <td className="px-6 py-3.5 text-sm text-slate-600">{trip.driver || '\u2014'}</td>
+                      <td className="px-6 py-3.5 text-center">
+                        <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${TRIP_BADGE[trip.status] || TRIP_BADGE.Draft}`}>
+                          {trip.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-sm text-right font-medium text-slate-500">{trip.eta}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
+        )}
 
+        {/* Vehicle Status Chart */}
+        {loading && !data ? (
+          <div className="lg:col-span-1"><SkeletonTable /></div>
+        ) : (
+          <div className={`lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 transition-opacity duration-200 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <div className="p-6 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <Truck className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="text-base font-bold text-slate-800">Vehicle Status</h3>
+              </div>
+            </div>
+
+            {totalVehicles === 0 ? (
+              <div className="p-6 text-center text-slate-400 text-sm py-16">No vehicle data yet.</div>
+            ) : (
+              <div className="p-4">
+                {/* Horizontal bars (custom, not Recharts for better control) */}
+                <div className="space-y-4">
+                  {chartData.map((item) => {
+                    const pct = totalVehicles > 0 ? (item.value / totalVehicles) * 100 : 0;
+                    const color = STATUS_COLORS[item.name] || '#94a3b8';
+                    return (
+                      <div key={item.name} className="group">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold text-slate-600">{item.name}</span>
+                          <span className="text-xs font-bold text-slate-800 tabular-nums">{item.value}</span>
+                        </div>
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${Math.max(pct, item.value > 0 ? 4 : 0)}%`,
+                              backgroundColor: color
+                            }}
+                          />
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 tabular-nums">{pct.toFixed(1)}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Total */}
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Fleet</span>
+                  <span className="text-lg font-extrabold text-slate-800 tabular-nums">{totalVehicles}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -30,6 +30,66 @@ const sanitizeUser = (user) => {
   };
 };
 
+exports.register = async (req, res, next) => {
+  try {
+    const { name, email, password, confirmPassword, role } = req.body;
+
+    if (!name || !email || !password || !confirmPassword || !role) {
+      throw new AppError(400, 'All fields are required');
+    }
+
+    if (name.trim().length < 2 || !/^[A-Za-z\s]+$/.test(name.trim())) {
+      throw new AppError(400, 'Name must be at least 2 characters and contain only letters and spaces', 'name');
+    }
+
+    if (password !== confirmPassword) {
+      throw new AppError(400, 'Passwords do not match', 'confirmPassword');
+    }
+
+    if (role === 'FleetManager') {
+      throw new AppError(403, 'Registration as FleetManager is not permitted via public endpoint', 'role');
+    }
+
+    const validRoles = ['Dispatcher', 'SafetyOfficer', 'FinancialAnalyst'];
+    if (!validRoles.includes(role)) {
+      throw new AppError(400, 'Invalid role selected', 'role');
+    }
+
+    // Password strength checks
+    if (password.length < 8) {
+      throw new AppError(400, 'Password must be at least 8 characters long', 'password');
+    }
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      throw new AppError(400, 'Password must contain at least 1 letter, 1 number, and 1 special character', 'password');
+    }
+
+    const blocklist = ['password123', '12345678', 'qwerty', 'password'];
+    if (blocklist.includes(password.toLowerCase())) {
+      throw new AppError(400, 'Password is too common', 'password');
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      throw new AppError(409, 'Email is already registered', 'email');
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      passwordHash,
+      role
+    });
+
+    await newUser.save();
+    res.status(201).json({ success: true, message: 'Registration successful. Please log in.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -76,7 +136,31 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     const token = signJwt(user);
-    res.json({ success: true, data: { token, user: sanitizeUser(user) } });
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    };
+    res.cookie('token', token, cookieOptions);
+    res.json({ success: true, data: { user: sanitizeUser(user) } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.logout = (req, res) => {
+  res.clearCookie('token');
+  res.json({ success: true, message: 'Logged out successfully' });
+};
+
+exports.me = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+    res.json({ success: true, data: { user: sanitizeUser(user) } });
   } catch (error) {
     next(error);
   }

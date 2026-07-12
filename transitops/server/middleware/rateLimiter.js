@@ -14,4 +14,18 @@ const loginLimiter = rateLimit({
   }
 });
 
-module.exports = { loginLimiter };
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,   // 1 hour
+  max: 5,                     // 5 requests per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    errors: [{ field: null, message: 'Too many registration attempts from this IP. Try again later.' }]
+  },
+  handler: (req, res, next, options) => {
+    res.status(429).json(options.message);
+  }
+});
+
+module.exports = { loginLimiter, registerLimiter };

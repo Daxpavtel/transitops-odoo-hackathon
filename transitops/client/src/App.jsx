@@ -25,15 +25,16 @@ import TripDispatcher from './pages/TripDispatcher';
 import Dashboard from './pages/Dashboard';
 import FuelExpenses from './pages/FuelExpenses';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'vehicles' | 'drivers'
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Fleet Manager Demo',
-    role: 'FleetManager' // 'FleetManager' | 'Dispatcher' | 'SafetyOfficer' | 'FinancialAnalyst'
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authView, setAuthView] = useState('login');
+  const [loadingAuth, setLoadingAuth] = useState(true);
   
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,27 +46,33 @@ function App() {
   useEffect(() => {
     const fetchMatrix = async () => {
       try {
-        let email = 'fleetmanager@transitops.io';
-        const res = await fetch(`${API_BASE_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: 'Password@123' })
-        });
-        const result = await res.json();
-        if (result.success && result.data.token) {
-          const rbacRes = await fetch(`${API_BASE_URL}/settings/rbac`, {
-            headers: { 'Authorization': `Bearer ${result.data.token}` }
-          });
-          const rbacData = await rbacRes.json();
-          if (rbacData.success) {
-            setRbacMatrix(rbacData.data);
-          }
+        if (!currentUser) return;
+        const rbacRes = await fetch(`${API_BASE_URL}/settings/rbac`);
+        const rbacData = await rbacRes.json();
+        if (rbacData.success) {
+          setRbacMatrix(rbacData.data);
         }
       } catch (err) {
         console.error('Failed to fetch RBAC', err);
       }
     };
     fetchMatrix();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`);
+        const result = await res.json();
+        if (result.success) {
+          setCurrentUser(result.data.user);
+        }
+      } catch (err) {
+      } finally {
+        setLoadingAuth(false);
+      }
+    };
+    checkAuth();
   }, []);
 
   // Derive active permissions
@@ -123,28 +130,9 @@ function App() {
   }, [activeTab]);
 
   const getAuthHeaders = async () => {
-    let email = 'fleetmanager@transitops.io';
-    if (currentUser.role === 'FinancialAnalyst') email = 'finance@transitops.io';
-    else if (currentUser.role === 'Dispatcher') email = 'dispatcher@transitops.io';
-    else if (currentUser.role === 'SafetyOfficer') email = 'safety@transitops.io';
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'Password@123' })
-      });
-      const result = await res.json();
-      if (result.success && result.data.token) {
-        return {
-          'Authorization': `Bearer ${result.data.token}`,
-          'Content-Type': 'application/json'
-        };
-      }
-    } catch (e) {
-      console.error('Failed to get auth token', e);
-    }
-    return { 'Content-Type': 'application/json' };
+    return {
+      'Content-Type': 'application/json'
+    };
   };
 
   const fetchData = async () => {
@@ -727,6 +715,26 @@ function App() {
            maintenanceForm.date;
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } catch(err) {}
+    setCurrentUser(null);
+    setAuthView('login');
+  };
+
+  if (loadingAuth) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-semibold text-slate-500">Loading TransitOps...</div>;
+  }
+
+  if (!currentUser) {
+    if (authView === 'login') {
+      return <Login onLoginSuccess={(user) => setCurrentUser(user)} onSwitchToRegister={() => setAuthView('register')} />;
+    } else {
+      return <Register onRegisterSuccess={() => setAuthView('login')} onSwitchToLogin={() => setAuthView('login')} />;
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans text-slate-800">
       {/* 1. DARK SIDEBAR */}
@@ -859,20 +867,6 @@ function App() {
           </nav>
         </div>
 
-        {/* User Role Switcher in Sidebar Footer for simulation */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Simulate Active Role</div>
-          <select 
-            value={currentUser.role}
-            onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
-            className="w-full bg-slate-800 text-slate-200 text-xs rounded border border-slate-700 p-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="FleetManager">Fleet Manager</option>
-            <option value="Dispatcher">Dispatcher</option>
-            <option value="SafetyOfficer">Safety Officer</option>
-            <option value="FinancialAnalyst">Financial Analyst</option>
-          </select>
-        </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
@@ -903,16 +897,22 @@ function App() {
           </div>
 
           {/* Top Bar Right: Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm font-semibold text-slate-800">{currentUser.name}</div>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                 {currentUser.role}
               </span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold border border-indigo-200">
-              FM
+            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold border border-indigo-200 uppercase">
+              {currentUser.name.charAt(0)}
             </div>
+            <button 
+              onClick={handleLogout}
+              className="text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors ml-2 border-l border-slate-200 pl-4"
+            >
+              Logout
+            </button>
           </div>
         </header>
 

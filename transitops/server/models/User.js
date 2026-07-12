@@ -12,6 +12,14 @@ const userSchema = new mongoose.Schema({
   failedLoginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
   lastFailedLoginAt: { type: Date, default: null }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    transform: function (doc, ret) {
+      delete ret.passwordHash;
+      return ret;
+    }
+  }
+});
 
 module.exports = mongoose.model('User', userSchema);

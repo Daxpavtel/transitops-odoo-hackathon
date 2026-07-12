@@ -2,13 +2,11 @@ const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController');
 const { body } = require('express-validator');
-
-// Assuming you have an auth middleware
-// const auth = require('../middleware/auth');
-// router.use(auth);
+const auth = require('../middleware/auth');
+const { authorize } = require('../middleware/rbac');
 
 // Validation array for creation
-const tripValidation = [
+const tripValidationRules = [
   body('source').notEmpty().withMessage('Source is required'),
   body('destination').notEmpty().withMessage('Destination is required'),
   body('vehicle').isMongoId().withMessage('Invalid Vehicle ID'),
@@ -17,11 +15,20 @@ const tripValidation = [
   body('plannedDistance').isFloat({ gt: 0 }).withMessage('Planned Distance must be > 0'),
 ];
 
+const completeValidationRules = [
+  body('actualDistance').isFloat({ gt: 0 }).withMessage('Actual Distance must be > 0')
+];
+
+router.use(auth);
+
+// All trip routes require canDispatchTrips
+router.use(authorize('canDispatchTrips'));
+
 router.get('/', tripController.getTrips);
-router.post('/', tripValidation, tripController.handleValidationErrors, tripController.createTrip);
+router.post('/', tripValidationRules, tripController.handleValidationErrors, tripController.createTrip);
 
 router.post('/:id/dispatch', tripController.dispatchTrip);
-router.post('/:id/complete', tripController.completeTrip);
+router.post('/:id/complete', completeValidationRules, tripController.handleValidationErrors, tripController.completeTrip);
 router.post('/:id/cancel', tripController.cancelTrip);
 
 module.exports = router;

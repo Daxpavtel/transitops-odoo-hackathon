@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const vehicleController = require('../controllers/vehicleController');
+const auth = require('../middleware/auth');
+const { authorize } = require('../middleware/rbac');
 
 const vehicleValidationRules = [
   body('registrationNumber')
@@ -70,6 +72,9 @@ const vehicleUpdateValidationRules = [
     .optional()
     .isIn(['Available', 'On Trip', 'In Shop', 'Retired']).withMessage('Invalid status value.')
 ];
+
+router.use(auth);
+router.use(authorize('canManageVehicles'));
 
 router.get('/', vehicleController.getVehicles);
 router.get('/:id', vehicleController.getVehicleById);

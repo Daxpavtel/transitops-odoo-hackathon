@@ -25,6 +25,8 @@ const expenseRoutes = require('./routes/expenses');
 const financeRoutes = require('./routes/finance');
 const maintenanceRoutes = require('./routes/maintenance');
 const dashboardRoutes = require('./routes/dashboard');
+const settingsRoutes = require('./routes/settings');
+const reportsRoutes = require('./routes/reports');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
@@ -35,6 +37,8 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

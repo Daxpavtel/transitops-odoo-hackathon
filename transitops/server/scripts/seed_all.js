@@ -3,7 +3,10 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
+const Trip = require('../models/Trip');
+const FuelLog = require('../models/FuelLog');
 const MaintenanceLog = require('../models/MaintenanceLog');
+const Expense = require('../models/Expense');
 require('dotenv').config();
 
 const seedUsers = [
@@ -36,18 +39,22 @@ const seedDB = async () => {
   try {
     const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/transitops';
     await mongoose.connect(MONGO_URI);
-    console.log('MongoDB connected for seeding nested DB.');
+    console.log('MongoDB connected for seeding all tables.');
 
     await User.deleteMany({});
     await Vehicle.deleteMany({});
     await Driver.deleteMany({});
+    await Trip.deleteMany({});
+    await FuelLog.deleteMany({});
     await MaintenanceLog.deleteMany({});
+    await Expense.deleteMany({});
 
     // Seed Users
+    const users = [];
     for (const userData of seedUsers) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(userData.password, salt);
-      await User.create({
+      const user = await User.create({
         name: userData.name,
         email: userData.email,
         role: userData.role,
@@ -55,6 +62,7 @@ const seedDB = async () => {
         failedLoginAttempts: 0,
         lockUntil: null
       });
+      users.push(user);
     }
     console.log('Users seeded.');
 
@@ -63,10 +71,151 @@ const seedDB = async () => {
     console.log('Vehicles seeded.');
 
     // Seed Drivers
-    await Driver.insertMany(seedDrivers);
+    const drivers = await Driver.insertMany(seedDrivers);
     console.log('Drivers seeded.');
 
-    // Seed an active maintenance log for the vehicle "KA03XY4567" which is "In Shop"
+    const manager = users.find(u => u.role === 'FleetManager') || users[0];
+
+    // Seed Trips, FuelLogs, and Expenses across recent months for trend display
+    const tripData = [
+      {
+        tripCode: "TR001",
+        source: "Mumbai",
+        destination: "Pune",
+        vehicle: vehicles[0]._id,
+        driver: drivers[0]._id,
+        cargoWeight: 500,
+        plannedDistance: 150,
+        actualDistance: 155,
+        fuelConsumed: 22,
+        status: "Completed",
+        createdBy: manager._id,
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 2, 5)
+      },
+      {
+        tripCode: "TR002",
+        source: "Delhi",
+        destination: "Noida",
+        vehicle: vehicles[1]._id,
+        driver: drivers[1]._id,
+        cargoWeight: 900,
+        plannedDistance: 80,
+        actualDistance: 82,
+        fuelConsumed: 12,
+        status: "Completed",
+        createdBy: manager._id,
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 1, 10)
+      },
+      {
+        tripCode: "TR003",
+        source: "Bangalore",
+        destination: "Chennai",
+        vehicle: vehicles[2]._id,
+        driver: drivers[0]._id,
+        cargoWeight: 2000,
+        plannedDistance: 350,
+        actualDistance: 360,
+        fuelConsumed: 60,
+        status: "Completed",
+        createdBy: manager._id,
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 1)
+      },
+      {
+        tripCode: "TR004",
+        source: "Delhi",
+        destination: "Jaipur",
+        vehicle: vehicles[0]._id,
+        driver: drivers[1]._id,
+        cargoWeight: 750,
+        plannedDistance: 270,
+        actualDistance: 275,
+        fuelConsumed: 40,
+        status: "Completed",
+        createdBy: manager._id,
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 8)
+      }
+    ];
+
+    const seededTrips = await Trip.insertMany(tripData);
+    console.log('Trips seeded.');
+
+    // Seed Fuel Logs
+    const fuelLogs = [
+      {
+        vehicle: vehicles[0]._id,
+        liters: 22,
+        cost: 22 * 100, // $100 per liter
+        date: new Date(today.getFullYear(), today.getMonth() - 2, 5),
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 2, 5)
+      },
+      {
+        vehicle: vehicles[1]._id,
+        liters: 12,
+        cost: 12 * 100,
+        date: new Date(today.getFullYear(), today.getMonth() - 1, 10),
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 1, 10)
+      },
+      {
+        vehicle: vehicles[2]._id,
+        liters: 60,
+        cost: 60 * 100,
+        date: new Date(today.getFullYear(), today.getMonth(), 1),
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 1)
+      },
+      {
+        vehicle: vehicles[0]._id,
+        liters: 40,
+        cost: 40 * 100,
+        date: new Date(today.getFullYear(), today.getMonth(), 8),
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 8)
+      }
+    ];
+    await FuelLog.insertMany(fuelLogs);
+    console.log('Fuel logs seeded.');
+
+    // Seed Expenses
+    const expenses = [
+      {
+        trip: seededTrips[0]._id,
+        vehicle: vehicles[0]._id,
+        toll: 150,
+        other: 50,
+        maintenanceLinked: 0,
+        total: 200,
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 2, 5)
+      },
+      {
+        trip: seededTrips[1]._id,
+        vehicle: vehicles[1]._id,
+        toll: 80,
+        other: 40,
+        maintenanceLinked: 0,
+        total: 120,
+        createdAt: new Date(today.getFullYear(), today.getMonth() - 1, 10)
+      },
+      {
+        trip: seededTrips[2]._id,
+        vehicle: vehicles[2]._id,
+        toll: 300,
+        other: 100,
+        maintenanceLinked: 0,
+        total: 400,
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 1)
+      },
+      {
+        trip: seededTrips[3]._id,
+        vehicle: vehicles[0]._id,
+        toll: 250,
+        other: 50,
+        maintenanceLinked: 0,
+        total: 300,
+        createdAt: new Date(today.getFullYear(), today.getMonth(), 8)
+      }
+    ];
+    await Expense.insertMany(expenses);
+    console.log('Expenses seeded.');
+
+    // Seed active maintenance log
     const inShopVehicle = vehicles.find(v => v.registrationNumber === 'KA03XY4567');
     if (inShopVehicle) {
       await MaintenanceLog.create({
@@ -74,7 +223,8 @@ const seedDB = async () => {
         serviceType: "Engine Overhaul",
         cost: 1200,
         date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
-        status: "Active"
+        status: "Active",
+        createdAt: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000)
       });
       console.log('Active maintenance log seeded for In Shop vehicle.');
     }

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const driverController = require('../controllers/driverController');
+const auth = require('../middleware/auth');
+const { authorize } = require('../middleware/rbac');
 
 const driverValidationRules = [
   body('name')
@@ -70,6 +72,9 @@ const driverUpdateValidationRules = [
     .optional()
     .isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status value.')
 ];
+
+router.use(auth);
+router.use(authorize('canManageDrivers'));
 
 router.get('/', driverController.getDrivers);
 router.get('/:id', driverController.getDriverById);

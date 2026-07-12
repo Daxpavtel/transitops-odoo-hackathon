@@ -16,8 +16,10 @@ import {
   Edit, 
   Trash2,
   AlertCircle,
-  Wrench
+  Wrench,
+  BarChart3
 } from 'lucide-react';
+import ReportsAnalytics from './pages/ReportsAnalytics';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -708,6 +710,18 @@ function App() {
               <Wrench className="w-5 h-5" />
               <span>Maintenance</span>
             </button>
+
+            <button
+              onClick={() => { setActiveTab('reports'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'reports' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span>Reports & Analytics</span>
+            </button>
           </nav>
         </div>
 
@@ -744,7 +758,9 @@ function App() {
                   ? "Search vehicle by model, registration..." 
                   : activeTab === 'drivers' 
                     ? "Search driver by name, license..."
-                    : "Search logs by vehicle, service type..."
+                    : activeTab === 'maintenance'
+                      ? "Search logs by vehicle, service type..."
+                      : "Search reports..."
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -778,14 +794,18 @@ function App() {
                     ? 'Vehicle Registry' 
                     : activeTab === 'drivers' 
                       ? 'Drivers & Safety Profiles' 
-                      : 'Vehicle Maintenance Workflow'}
+                      : activeTab === 'maintenance'
+                        ? 'Vehicle Maintenance Workflow'
+                        : 'Reports & Analytics'}
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
                   {activeTab === 'vehicles' 
                     ? 'Manage your fleet registry, odometer details, load limits, and deployment states.' 
                     : activeTab === 'drivers'
                       ? 'Track driver qualifications, safety compliance, metrics, and licensing status.'
-                      : 'Track vehicle service records and automatically manage shop deployment states.'}
+                      : activeTab === 'maintenance'
+                        ? 'Track vehicle service records and automatically manage shop deployment states.'
+                        : 'Review vehicle ROI, monthly revenue/profit trends, and fleet efficiency.'}
                 </p>
               </div>
 
@@ -1276,6 +1296,10 @@ function App() {
               </div>
             )}
 
+            {activeTab === 'reports' && (
+              <ReportsAnalytics currentUser={currentUser} />
+            )}
+
           </div>
 
           {/* MODULE FOOTERS - MUST BE EXACT FOOTERS */}
@@ -1284,8 +1308,10 @@ function App() {
               <span>Rule: Registration no. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher</span>
             ) : activeTab === 'drivers' ? (
               <span>Rule: Expired license or Suspended status → blocked from trip assignment</span>
-            ) : (
+            ) : activeTab === 'maintenance' ? (
               <span>Note: In Shop vehicles are removed from the dispatch pool</span>
+            ) : (
+              <span>ROI Formula = (Total Revenue - Total Expense) / Total Expense</span>
             )}
           </footer>
         </main>

@@ -3,6 +3,8 @@ const router = express.Router();
 const { body } = require('express-validator');
 const mongoose = require('mongoose');
 const maintenanceController = require('../controllers/maintenanceController');
+const auth = require('../middleware/auth');
+const { authorize } = require('../middleware/rbac');
 
 const maintenanceValidationRules = [
   body('vehicle')
@@ -74,6 +76,9 @@ const maintenanceUpdateRules = [
     .optional()
     .isIn(['Active', 'Closed']).withMessage('Status must be either Active or Closed.')
 ];
+
+router.use(auth);
+router.use(authorize('canManageMaintenance'));
 
 router.get('/', maintenanceController.getMaintenanceLogs);
 router.post('/', maintenanceValidationRules, maintenanceController.handleValidationErrors, maintenanceController.createMaintenanceLog);

@@ -41,6 +41,7 @@ function App() {
   
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
 
   // RBAC State

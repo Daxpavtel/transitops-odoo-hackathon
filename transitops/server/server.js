@@ -20,12 +20,18 @@ const authRoutes = require('./routes/auth');
 const vehicleRoutes = require('./routes/vehicles');
 const driverRoutes = require('./routes/drivers');
 const tripRoutes = require('./routes/trips');
+const fuelRoutes = require('./routes/fuel');
+const expenseRoutes = require('./routes/expenses');
+const financeRoutes = require('./routes/finance');
 const maintenanceRoutes = require('./routes/maintenance');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/fuel', fuelRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/finance', financeRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 
 // Global Error Handler

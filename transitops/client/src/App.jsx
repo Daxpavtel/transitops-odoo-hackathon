@@ -405,22 +405,22 @@ function App() {
     }
   };
 
-  const handleCloseMaintenance = async (logId) => {
+  const handleCloseMaintenance = async (logId, newStatus = 'Closed') => {
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/maintenance/${logId}`, {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ status: 'Closed' })
+        body: JSON.stringify({ status: newStatus })
       });
       const result = await res.json();
       if (result.success) {
         fetchData();
       } else {
-        setErrorMsg(result.errors?.[0]?.message || 'Failed to close maintenance record.');
+        setErrorMsg(result.errors?.[0]?.message || 'Failed to update maintenance record status.');
       }
     } catch (err) {
-      setErrorMsg('Connection error while closing maintenance.');
+      setErrorMsg('Connection error while updating maintenance record.');
     }
   };
 
@@ -1003,6 +1003,24 @@ function App() {
                     <span>Add Driver</span>
                   </button>
                 )}
+                {activeTab === 'maintenance' && permissions.fleet === 'edit' && (
+                  <button
+                    onClick={() => {
+                      setMaintenanceForm({
+                        vehicle: '',
+                        serviceType: '',
+                        cost: '',
+                        date: new Date().toISOString().split('T')[0],
+                        status: 'Active'
+                      });
+                      setMaintenanceFormErrors({});
+                    }}
+                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-600/10 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Log Service Record</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1468,14 +1486,33 @@ function App() {
                                       {log.status === 'Active' ? (
                                         permissions.fleet === 'edit' ? (
                                           <button
-                                            onClick={() => handleCloseMaintenance(log._id)}
-                                            className="text-xs bg-[var(--surface-topbar)] hover:bg-[var(--surface-card)] text-[var(--content-primary)] font-semibold px-3 py-1 rounded transition-colors"
+                                            onClick={() => handleCloseMaintenance(log._id, 'Closed')}
+                                            title="Complete service and return vehicle to Available state"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                                           >
-                                            Close Log
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Complete & Release</span>
                                           </button>
-                                        ) : null
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            In Maintenance
+                                          </span>
+                                        )
                                       ) : (
-                                        <span className="text-xs text-[var(--content-muted)] font-medium italic">Completed</span>
+                                        <div className="flex items-center justify-center gap-2">
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            Completed
+                                          </span>
+                                          {permissions.fleet === 'edit' && (
+                                            <button
+                                              onClick={() => handleCloseMaintenance(log._id, 'Active')}
+                                              title="Re-open service record (moves vehicle back to In Shop)"
+                                              className="px-2 py-1 rounded text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
+                                            >
+                                              Reopen
+                                            </button>
+                                          )}
+                                        </div>
                                       )}
                                     </td>
                                   </tr>

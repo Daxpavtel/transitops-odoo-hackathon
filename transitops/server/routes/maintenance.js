@@ -22,7 +22,13 @@ const maintenanceValidationRules = [
 
   body('cost')
     .notEmpty().withMessage('Cost is required.')
-    .isFloat({ min: 0 }).withMessage('Cost must be a number greater than or equal to 0.'),
+    .isFloat({ min: 0 }).withMessage('Maintenance cost must be a number greater than or equal to 0.')
+    .custom(value => {
+      if (!Number.isFinite(Number(value)) || !/^\d+(?:\.\d{1,2})?$/.test(String(value))) {
+        throw new Error('Maintenance cost must be a non-negative amount with up to 2 decimal places.');
+      }
+      return true;
+    }),
 
   body('date')
     .notEmpty().withMessage('Date is required.')
@@ -58,7 +64,13 @@ const maintenanceUpdateRules = [
 
   body('cost')
     .optional()
-    .isFloat({ min: 0 }).withMessage('Cost must be a number greater than or equal to 0.'),
+    .isFloat({ min: 0 }).withMessage('Maintenance cost must be a number greater than or equal to 0.')
+    .custom(value => {
+      if (!Number.isFinite(Number(value)) || !/^\d+(?:\.\d{1,2})?$/.test(String(value))) {
+        throw new Error('Maintenance cost must be a non-negative amount with up to 2 decimal places.');
+      }
+      return true;
+    }),
 
   body('date')
     .optional()

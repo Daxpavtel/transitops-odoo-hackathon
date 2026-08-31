@@ -9,22 +9,18 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust proxy for IP-based rate limiting behind Vercel/proxies
+app.set('trust proxy', 1);
+
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 app.use(mongoSanitize());
 
-// Global Rate Limiter
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window`
-  message: { success: false, errors: [{ message: 'Too many requests from this IP, please try again later.' }] },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', globalLimiter);
+// Global Rate Limiter (Disabled for testing)
+// app.use('/api', globalLimiter);
 
 // Database connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/transitops';

@@ -61,7 +61,7 @@ exports.createMaintenanceLog = async (req, res, next) => {
     const log = new MaintenanceLog({
       vehicle: vehicleId,
       serviceType,
-      cost,
+      cost: Number(cost),
       date: new Date(date),
       status: logStatus
     });
@@ -121,7 +121,7 @@ exports.updateMaintenanceLog = async (req, res, next) => {
 
     if (status !== undefined) log.status = status;
     if (serviceType !== undefined) log.serviceType = serviceType;
-    if (cost !== undefined) log.cost = cost;
+    if (cost !== undefined) log.cost = Number(cost);
     if (date !== undefined) log.date = new Date(date);
 
     await log.save();

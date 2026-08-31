@@ -24,6 +24,14 @@ export default function TripDispatcher({ currentUser, readOnly }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedTripForStepper, setSelectedTripForStepper] = useState(null);
 
+  // Complete Trip modal state
+  const [completeModalTrip, setCompleteModalTrip] = useState(null);
+  const [completionForm, setCompletionForm] = useState({
+    finalOdometer: '',
+    actualDistance: '',
+    fuelConsumed: ''
+  });
+
   // Dynamic login token helper for role verification
   const getAuthHeaders = async () => {
     let email = 'fleetmanager@transitops.io';
@@ -212,6 +220,71 @@ export default function TripDispatcher({ currentUser, readOnly }) {
       }
     } catch (err) {
       setErrorMsg('Network error cancelling trip.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenCompleteModal = (trip) => {
+    const startOdo = trip.vehicle?.odometer || 0;
+    const plannedDist = trip.plannedDistance || 0;
+    setCompleteModalTrip(trip);
+    setCompletionForm({
+      finalOdometer: startOdo + plannedDist,
+      actualDistance: plannedDist,
+      fuelConsumed: Math.max(5, Math.round(plannedDist * 0.15))
+    });
+  };
+
+  const handleFinalOdometerChange = (val) => {
+    const finalOdo = parseFloat(val) || 0;
+    const startOdo = completeModalTrip?.vehicle?.odometer || 0;
+    const calcDistance = Math.max(0, finalOdo - startOdo);
+    setCompletionForm(prev => ({
+      ...prev,
+      finalOdometer: val,
+      actualDistance: calcDistance > 0 ? calcDistance : prev.actualDistance
+    }));
+  };
+
+  const handleCompleteTripSubmit = async (e) => {
+    e.preventDefault();
+    if (!completeModalTrip) return;
+
+    const actualDist = parseFloat(completionForm.actualDistance);
+    const fuel = parseFloat(completionForm.fuelConsumed);
+
+    if (!actualDist || actualDist <= 0) {
+      setErrorMsg('Actual distance must be greater than 0.');
+      return;
+    }
+    if (!fuel || fuel <= 0) {
+      setErrorMsg('Fuel consumed must be greater than 0.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/trips/${completeModalTrip._id}/complete`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          actualDistance: actualDist,
+          fuelConsumed: fuel
+        })
+      });
+      const result = await res.json();
+      if (result.success) {
+        setCompleteModalTrip(null);
+        fetchData();
+        setSelectedTripForStepper(result.data);
+      } else {
+        setErrorMsg(result.errors?.[0]?.message || 'Failed to complete trip.');
+      }
+    } catch (err) {
+      setErrorMsg('Network error completing trip.');
     } finally {
       setLoading(false);
     }
@@ -468,10 +541,16 @@ export default function TripDispatcher({ currentUser, readOnly }) {
 
                       <div className="text-[11px] font-bold text-indigo-600">
                         {trip.status === 'Dispatched' && !readOnly && (
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleOpenCompleteModal(trip); }}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded shadow-sm text-xs font-semibold transition-colors"
+                            >
+                              Complete
+                            </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCancelTrip(trip._id); }}
-                              className="text-red-600 hover:text-red-800 underline"
+                              className="text-red-500 hover:text-red-700 underline text-xs font-medium"
                             >
                               Cancel
                             </button>
@@ -503,6 +582,108 @@ export default function TripDispatcher({ currentUser, readOnly }) {
           On Complete: odometer -&gt; fuel log -&gt; expenses -&gt; Vehicle & Driver Available
         </div>
       </div>
+
+      {/* --- COMPLETE TRIP MODAL --- */}
+      {completeModalTrip && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[var(--surface-card)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--divider-subtle)] transform transition-all">
+            <div className="p-6 bg-[var(--surface-topbar)] text-[var(--content-primary)] flex justify-between items-center border-b border-[var(--divider-subtle)]">
+              <div>
+                <h3 className="text-lg font-bold">Complete Trip — {completeModalTrip.tripCode}</h3>
+                <p className="text-xs text-[var(--content-muted)] mt-0.5">
+                  {completeModalTrip.source} → {completeModalTrip.destination}
+                </p>
+              </div>
+              <button 
+                onClick={() => setCompleteModalTrip(null)}
+                className="text-[var(--content-muted)] hover:text-[var(--content-primary)] transition-colors p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCompleteTripSubmit} className="p-6 space-y-4">
+              <div className="p-3 bg-[var(--surface-panel)] rounded-lg text-xs space-y-1.5 text-[var(--content-muted)] border border-[var(--divider-subtle)]">
+                <div className="flex justify-between">
+                  <span>Assigned Vehicle:</span>
+                  <span className="font-bold text-[var(--content-primary)]">{completeModalTrip.vehicle?.registrationNumber || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Start Odometer:</span>
+                  <span className="font-mono font-bold text-[var(--content-primary)]">{completeModalTrip.vehicle?.odometer || 0} km</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Planned Distance:</span>
+                  <span className="font-mono font-bold text-[var(--content-primary)]">{completeModalTrip.plannedDistance || 0} km</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">
+                  Final Odometer Reading (km)
+                </label>
+                <input
+                  type="number"
+                  value={completionForm.finalOdometer}
+                  onChange={(e) => handleFinalOdometerChange(e.target.value)}
+                  min={(completeModalTrip.vehicle?.odometer || 0) + 1}
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] text-[var(--content-primary)] focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  placeholder="e.g. 45200"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">
+                  Actual Distance Traveled (km)
+                </label>
+                <input
+                  type="number"
+                  value={completionForm.actualDistance}
+                  onChange={(e) => setCompletionForm(prev => ({ ...prev, actualDistance: e.target.value }))}
+                  min="1"
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] text-[var(--content-primary)] focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  placeholder="Distance in km"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--content-muted)] uppercase tracking-wider mb-1">
+                  Fuel Consumed (Liters)
+                </label>
+                <input
+                  type="number"
+                  value={completionForm.fuelConsumed}
+                  onChange={(e) => setCompletionForm(prev => ({ ...prev, fuelConsumed: e.target.value }))}
+                  min="0.1"
+                  step="0.1"
+                  className="w-full p-2.5 border border-[var(--divider-subtle)] rounded-lg text-sm bg-[var(--surface-panel)] text-[var(--content-primary)] focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  placeholder="Liters of fuel"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-[var(--divider-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setCompleteModalTrip(null)}
+                  className="flex-1 py-2 border border-[var(--divider-subtle)] rounded-lg text-sm font-semibold text-[var(--content-muted)] hover:bg-[var(--surface-panel)] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-md shadow-emerald-600/20 transition-all"
+                >
+                  {loading ? 'Completing...' : 'Confirm & Complete'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

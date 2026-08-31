@@ -1,0 +1,7 @@
+{
+  "name": "Test",
+  "email": "dispatcher@transitops.io",
+  "password": "ValidPassword1",
+  "confirmPassword": "ValidPassword1",
+  "role": "Dispatcher"
+}

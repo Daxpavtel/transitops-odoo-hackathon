@@ -57,8 +57,8 @@ exports.createDriver = async (req, res, next) => {
     const { name, licenseNumber, licenseCategory, licenseExpiry, contact, safetyScore, status, bloodGroup, emergencyContactName, emergencyContactNumber } = req.body;
 
     // Check unique license number
-    const trimmedLicense = licenseNumber.trim();
-    const existing = await Driver.findOne({ licenseNumber: trimmedLicense });
+    const normalizedLicense = licenseNumber.replace(/[\s-]/g, '').toUpperCase();
+    const existing = await Driver.findOne({ licenseNumber: normalizedLicense });
 
     if (existing) {
       return res.status(409).json({
@@ -79,7 +79,7 @@ exports.createDriver = async (req, res, next) => {
 
     const driver = new Driver({
       name,
-      licenseNumber: trimmedLicense,
+      licenseNumber: normalizedLicense,
       licenseCategory,
       licenseExpiry: expiryDate,
       contact,
@@ -113,16 +113,16 @@ exports.updateDriver = async (req, res, next) => {
 
     // Unique check if license number changes
     if (licenseNumber) {
-      const trimmedLicense = licenseNumber.trim();
-      if (trimmedLicense !== driver.licenseNumber) {
-        const existing = await Driver.findOne({ licenseNumber: trimmedLicense });
+      const normalizedLicense = licenseNumber.replace(/[\s-]/g, '').toUpperCase();
+      if (normalizedLicense !== driver.licenseNumber) {
+        const existing = await Driver.findOne({ licenseNumber: normalizedLicense });
         if (existing) {
           return res.status(409).json({
             success: false,
             errors: [{ field: 'licenseNumber', message: 'License number already exists.' }]
           });
         }
-        driver.licenseNumber = trimmedLicense;
+        driver.licenseNumber = normalizedLicense;
       }
     }
 

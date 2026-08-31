@@ -118,36 +118,19 @@ export default function Dashboard({ currentUser }) {
   // Debounce timer
   const debounceRef = useRef(null);
 
-  const getAuthHeaders = async () => {
-    let email = 'fleetmanager@transitops.io';
-    if (currentUser?.role === 'FinancialAnalyst') email = 'finance@transitops.io';
-    else if (currentUser?.role === 'Dispatcher') email = 'dispatcher@transitops.io';
-    else if (currentUser?.role === 'SafetyOfficer') email = 'safety@transitops.io';
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'Password@123' })
-      });
-      const result = await res.json();
-      if (result.success && result.data.token) {
-        return { 'Authorization': `Bearer ${result.data.token}`, 'Content-Type': 'application/json' };
-      }
-    } catch (e) { console.error('Auth error', e); }
-    return { 'Content-Type': 'application/json' };
-  };
-
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const headers = await getAuthHeaders();
       const params = new URLSearchParams();
       if (vehicleType !== 'All') params.set('vehicleType', vehicleType);
       if (statusFilter !== 'All') params.set('status', statusFilter);
 
       const url = `${API_BASE_URL}/dashboard/summary${params.toString() ? '?' + params.toString() : ''}`;
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
       const result = await res.json();
 
       if (result.success) {
@@ -160,7 +143,7 @@ export default function Dashboard({ currentUser }) {
     } finally {
       setLoading(false);
     }
-  }, [vehicleType, statusFilter, currentUser]);
+  }, [vehicleType, statusFilter]);
 
   useEffect(() => {
     // Debounce filter changes by 300ms

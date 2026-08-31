@@ -9,7 +9,15 @@ const vehicleSchema = new mongoose.Schema({
     required: true 
   },
   maxLoadCapacity: { type: Number, required: true, min: [1, 'Capacity must be greater than 0'] },
-  odometer: { type: Number, default: 0, min: 0 },
+  odometer: {
+    type: Number,
+    default: 0,
+    min: [0, 'Odometer cannot be negative.'],
+    validate: {
+      validator: Number.isFinite,
+      message: 'Odometer must be a finite number.'
+    }
+  },
   acquisitionCost: { type: Number, required: true, min: [1, 'Cost must be greater than 0'] },
   status: { 
     type: String, 

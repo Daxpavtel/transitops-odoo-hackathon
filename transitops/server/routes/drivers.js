@@ -14,7 +14,10 @@ const driverValidationRules = [
 
   body('licenseNumber')
     .trim()
-    .notEmpty().withMessage('License number is required.'),
+    .notEmpty().withMessage('License number is required.')
+    .matches(/^[A-Z]{2}(?:-\d{2}|\d{2}[ -]?)\d{4}\d{7}$/i)
+    .withMessage('License number must use AA00YYYY0000000 format (e.g. HR-0619850034761).')
+    .customSanitizer(value => value.replace(/[\s-]/g, '').toUpperCase()),
 
   body('licenseCategory')
     .trim()
@@ -66,7 +69,10 @@ const driverUpdateValidationRules = [
 
   body('licenseNumber')
     .optional()
-    .trim(),
+    .trim()
+    .matches(/^[A-Z]{2}(?:-\d{2}|\d{2}[ -]?)\d{4}\d{7}$/i)
+    .withMessage('License number must use AA00YYYY0000000 format (e.g. HR-0619850034761).')
+    .customSanitizer(value => value.replace(/[\s-]/g, '').toUpperCase()),
 
   body('licenseCategory')
     .optional()

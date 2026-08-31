@@ -42,9 +42,9 @@ const seedData = async () => {
 
     console.log('Seeding Drivers...');
     const drivers = [
-      { name: 'Ramesh Kumar', licenseNumber: 'LIC-MH-123', licenseCategory: 'HMV', licenseExpiry: new Date(Date.now() + 31536000000), contact: '9876543210', status: 'Available' },
-      { name: 'Suresh Singh', licenseNumber: 'LIC-KA-456', licenseCategory: 'LMV', licenseExpiry: new Date(Date.now() + 31536000000), contact: '9876543211', status: 'Available' },
-      { name: 'Abdul Rahman', licenseNumber: 'LIC-DL-789', licenseCategory: 'Heavy Trailer', licenseExpiry: new Date(Date.now() - 86400000), contact: '9876543212', status: 'Suspended' }
+      { name: 'Ramesh Kumar', licenseNumber: 'MH1220150000123', licenseCategory: 'HMV', licenseExpiry: new Date(Date.now() + 31536000000), contact: '9876543210', status: 'Available' },
+      { name: 'Suresh Singh', licenseNumber: 'KA0320160000456', licenseCategory: 'LMV', licenseExpiry: new Date(Date.now() + 31536000000), contact: '9876543211', status: 'Available' },
+      { name: 'Abdul Rahman', licenseNumber: 'DL1420140000789', licenseCategory: 'Heavy Trailer', licenseExpiry: new Date(Date.now() - 86400000), contact: '9876543212', status: 'Suspended' }
     ];
     await Driver.insertMany(drivers);
 

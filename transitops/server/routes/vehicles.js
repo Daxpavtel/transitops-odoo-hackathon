@@ -28,7 +28,7 @@ const vehicleValidationRules = [
 
   body('odometer')
     .optional()
-    .isFloat({ min: 0 }).withMessage('Odometer must be a number greater than or equal to 0.'),
+    .isInt({ min: 0 }).withMessage('Odometer must be a whole number greater than or equal to 0.'),
 
   body('acquisitionCost')
     .notEmpty().withMessage('Acquisition cost is required.')
@@ -62,7 +62,7 @@ const vehicleUpdateValidationRules = [
 
   body('odometer')
     .optional()
-    .isFloat({ min: 0 }).withMessage('Odometer must be a number greater than or equal to 0.'),
+    .isInt({ min: 0 }).withMessage('Odometer must be a whole number greater than or equal to 0.'),
 
   body('acquisitionCost')
     .optional()

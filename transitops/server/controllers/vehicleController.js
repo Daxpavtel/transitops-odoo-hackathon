@@ -72,7 +72,7 @@ exports.createVehicle = async (req, res, next) => {
       name,
       type,
       maxLoadCapacity,
-      odometer: odometer || 0,
+      odometer: odometer !== undefined ? Number(odometer) : 0,
       acquisitionCost,
       status: finalStatus
     });
@@ -132,7 +132,7 @@ exports.updateVehicle = async (req, res, next) => {
           errors: [{ field: 'odometer', message: 'Odometer cannot be manually decreased.' }]
         });
       }
-      vehicle.odometer = odometer;
+      vehicle.odometer = Number(odometer);
     }
 
     // Acquisition Cost

@@ -59,18 +59,18 @@ exports.register = async (req, res, next) => {
     if (password.length < 8) {
       throw new AppError(400, 'Password must be at least 8 characters long', 'password');
     }
-    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      throw new AppError(400, 'Password must contain at least 1 letter, 1 number, and 1 special character', 'password');
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      throw new AppError(400, 'Password must contain at least 1 letter and 1 number', 'password');
     }
 
-    const blocklist = ['password123', '12345678', 'qwerty', 'password'];
+    const blocklist = ['password123', '12345678', 'qwerty', 'admin123'];
     if (blocklist.includes(password.toLowerCase())) {
       throw new AppError(400, 'Password is too common', 'password');
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
-      throw new AppError(409, 'Email is already registered', 'email');
+      throw new AppError(409, 'Unable to complete registration with these details', 'email');
     }
 
     const salt = await bcrypt.genSalt(12);

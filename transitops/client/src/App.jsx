@@ -787,19 +787,17 @@ function App() {
 
           {/* Nav list */}
           <nav className="p-4 space-y-1">
-            {permissions.analytics !== 'hidden' && (
-              <button
-                onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'dashboard' 
-                    ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
-                    : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
-                }`}
-              >
-                <BarChart3 className="w-5 h-5" />
-                <span>Dashboard</span>
-              </button>
-            )}
+            <button
+              onClick={() => { setActiveTab('dashboard'); setSearchQuery(''); setTypeFilter('All'); setStatusFilter('All'); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === 'dashboard' 
+                  ? 'bg-indigo-600 text-[var(--content-primary)] shadow-lg shadow-indigo-600/30' 
+                  : 'text-[var(--content-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--content-primary)]'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span>Dashboard</span>
+            </button>
 
             {permissions.fleet !== 'hidden' && (
               <button

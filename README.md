@@ -113,4 +113,4 @@ The following variables are read from `process.env` in the `server` directory:
 
 ## Team
 - *Daksh Patel*
-- *Yash Shayani*
+- *Yash Sayani*

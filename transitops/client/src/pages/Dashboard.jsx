@@ -6,8 +6,7 @@ import {
   Truck, Users, MapPin, Activity, Clock, Wrench, TrendingUp, AlertTriangle,
   Filter, X, ArrowRight, RefreshCw, DollarSign, ShieldAlert, CheckCircle2, AlertCircle
 } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config';
 
 const STATUS_COLORS = {
   Available: '#10b981',

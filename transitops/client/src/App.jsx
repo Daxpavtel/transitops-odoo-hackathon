@@ -29,8 +29,7 @@ import FuelExpenses from './pages/FuelExpenses';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'vehicles' | 'drivers'

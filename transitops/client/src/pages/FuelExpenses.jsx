@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Fuel, Receipt, DollarSign, X, AlertCircle, Truck, Calendar, Filter } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config';
 
 export default function FuelExpenses({ currentUser, readOnly }) {
   const [fuelLogs, setFuelLogs] = useState([]);

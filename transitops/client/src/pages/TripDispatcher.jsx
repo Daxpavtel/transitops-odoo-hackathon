@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Play, X, AlertTriangle, CheckCircle2, ChevronRight, Truck, User as UserIcon, Calendar, ArrowRight
 } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config';
 
 export default function TripDispatcher({ currentUser, readOnly }) {
   const [vehicles, setVehicles] = useState([]);

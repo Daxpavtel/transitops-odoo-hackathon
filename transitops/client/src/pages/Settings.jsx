@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, ShieldAlert, CheckCircle, Navigation } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config';
 
 export default function Settings({ currentUser, onBack, theme, toggleTheme }) {
   const [general, setGeneral] = useState({ depotName: '', currency: 'INR', distanceUnit: 'km' });

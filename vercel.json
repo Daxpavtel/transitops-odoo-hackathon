@@ -20,11 +20,16 @@
       "dest": "transitops/api/index.js"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "/transitops/client/assets/$1"
+    },
+    {
+      "src": "/((?!api/).*\\.[a-zA-Z0-9]+)",
+      "dest": "/transitops/client/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/transitops/client/index.html"
     }
   ]
 }
